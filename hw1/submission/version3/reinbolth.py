@@ -19,7 +19,6 @@ import re
 # Global variables
 # debug flag that will show all token info
 token_info = True
-debug_info = False
 whitespace = False
 
 # comment flag that will scan over comments
@@ -31,8 +30,7 @@ finished_tokens = []
 # list of current accepted tokens
 token_regex = [
 # COMMENTS
-["ECOMMENT", r'[ \t\n]*\*\)[ \t\n]*'],
-["SCOMMENT", r'\(\*[ \t\n]*'],
+["SCOMMENT", r'\(\*'],
 
 # SIGNS
 ["T_PLUS", r'[+]'], # Escape + to escape "nothing to repeat at engine 0" - Python specific error 
@@ -65,37 +63,39 @@ token_regex = [
 ["T_SCOLON", r'[;]'],
 
 # LOGICAL
-["T_AND", r'and[ \t\n]'],
-["T_OR", r'or[ \t\n]'],
-["T_NOT", r'not[ \t\n]'],
-["T_TRUE", r'true[ \t\n]'],
-["T_FALSE", r'false[ \t\n]'],
+["T_AND", r'and'],
+["T_OR", r'or'],
+["T_NOT", r'not'],
+["T_TRUE", r'true'],
+["T_FALSE", r'false'],
 
 # SPECIAL WORDS
-["T_ARRAY", r'array[ \t\n]'],
-["T_BOOL", r'boolean[ \t\n]'],
-["T_BEGIN", r'begin[ \t\n]'],
-["T_CHAR", r'char[ \t\n]'],
-["T_DO", r'do[ \t\n]'],
-["T_ELSE", r'else[ \t\n]'],
-["T_END", r'end[ \t\n]'],
-["T_IF", r'if[ \t\n]'],
-["T_INT", r'integer[ \t\n]'],
-["T_OF", r'of[ \t\n]'],
-["T_PROC", r'procedure[ \t\n]'],
-["T_PROG", r'program[ \t\n]'],
-["T_READ", r'read[ \t\n]'],
-["T_THEN", r'then[ \t\n]'],
-["T_VAR", r'var[ \t\n]'],
-["T_WHILE", r'while[ \t\n]'],
-["T_WRITE", r'write[ \t\n]'],
+["T_ARRAY", r'array'],
+["T_BOOL", r'boolean'],
+["T_BEGIN", r'begin'],
+["T_CHAR", r'char'],
+["T_DO", r'do'],
+["T_ELSE", r'else'],
+["T_END", r'end'],
+["T_IF", r'if'],
+["T_INT", r'integer'],
+["T_OF", r'of'],
+["T_PROC", r'procedure'],
+["T_PROG", r'program'],
+["T_READ", r'read'],
+["T_THEN", r'then'],
+["T_VAR", r'var'],
+["T_WHILE", r'while'],
+["T_WRITE", r'write'],
 
 # REGEX COMBO SPECIAL
+["ECOMMENT", r'\*\)'],
 ["T_INTCONST", r'[0-9]+'],
-["T_CHARCONST", r'[\'].[\'][ \t\n]*'],
+["T_CHARCONST", r'[\'].[\']'],
+["CHARCONSTERR", r'[\'].'],
 ["T_IDENT", r'[a-zA-Z0-9\_]+[a-zA-Z0-9\_]*'],
-["DQUOTE", r'[\']+'],
-["SQUOTE", r'[\']'],
+["SQUOTE", r'[\'\']'],
+["DQUOTE", r'[\']'],
 ["WHITESPACE", r'[ \t\n]'],
 ["UNKNOWN", r'.']
 
@@ -103,16 +103,8 @@ token_regex = [
 
 # Print Statements for Tokens
 def print_token(token, lexeme):
-    global token_info
     if token_info == True:
         print("TOKEN:\t" + str(token) + "\tLEXEME:\t" + str(lexeme))
-        
-# print messages to help debug
-def print_debug(line):
-    global debug_info
-
-    if debug_info == True:
-        print("DEBUG LINE: "+str(line))    
 
 # Error Messages
 
@@ -123,8 +115,6 @@ def create_token_list(item):
     cords = 0
     global comment
     global whitespace
-    global token_regex
-    print_debug("Start token creation")
     
     # while each line is not finished, keep processing
     while len(item) > cords:
@@ -141,46 +131,38 @@ def create_token_list(item):
                 
                 # iterate to current spot in the list to start of there if processing again
                 cords = cords + x.span()[1]
-                print_debug("Found Token! "+str(x.group(0))+" Type: "+str(i[0]))
                 
                 # check for comments
-                
                 if (i[0] == "SCOMMENT"):
                         comment = True
-                elif (i[0] == "ECOMMENT"):
+                        whitespace = False
+                        break
+                if (i[0] == "ECOMMENT"):
                         comment = False
-                
+                        break
                 if (comment == True):
-                    print_debug("Comment = True")
+                    whitespace = False
                     break
                 else:
-                    print_debug("Made it to final token check")
                     # check for errors and skip some things
                     if (i[0] == "WHITESPACE"):
                         whitespace = True
                         break
-                    elif (i[0] == "ECOMMENT"):
-                        comment = False
-                        break
-                    elif (i[0] == "SCOMMENT"):
-                        comment = True
-                        break
                     elif (i[0] == "T_INTCONST"):
                         if (int(x.group(0)) > 2147483647):
-                            print_debug("Found int error! "+str(x.group(0)))
                             print("**** Invalid integer constant: "+str(x.group(0)))
                             break
+                    elif (i[0] == "CHARCONSTERR" and whitespace == True):
+                        print("**** Invalid character constant: "+str(x.group(0)))
+                        break
                     elif (i[0] == "SQUOTE"):
-                        print_debug("Found quote error! "+str(x.group(0)))
                         print("**** Invalid character constant: "+str(x.group(0)))
                         break
                     elif (i[0] == "DQUOTE"):
-                        print_debug("Found quote error! "+str(x.group(0)))
                         print("**** Invalid character constant: "+str(x.group(0)))
                         break
                     
                     # print token info and add to token list for later
-                    print_debug("Sending to print "+str(x.group(0)))
                     print_token(i[0], x.group(0))
                     finished_tokens.append(str(x.group(0)))
                     #print("line: "+str(item[cords:]))
@@ -191,15 +173,12 @@ def create_token_list(item):
 def process_file():
     # pull in file
     init_file = open(str(sys.argv[1]), "r")
-    print_debug("Input file: "+str(sys.argv[1]))
     
     # split into list of string lines
     lines = init_file.readlines()
-    print_debug("Lines: "+str(lines))
     
     # split up all tokens and put in a global list for later
     for line in lines:
-        print_debug("Start create tokens for line: "+str(line))
         create_token_list(line)
         
 def getToken():
@@ -216,7 +195,6 @@ def getToken():
 
 def main():
     # process input file and sort tokens
-    print_debug("Start processing file")
     process_file()
     
     return 0
