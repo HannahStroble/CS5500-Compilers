@@ -1,12 +1,21 @@
 #!/usr/bin/env python3
 
 
+# token: T_PROG LEXEME: program
+# token = [T_PROG, program]
 
+# global variables
+debug_token = True
+
+# prints
+def print_tokens(token):
+    if debug_token == True:
+        print("TOKEN: "+str(token[0])+"\t\tLEXEME: "+str(token[1]))
 
 # grammars
 
-def prog_lib():
-    #program
+def prog_lbl(token):
+    debug_token(token)
 
 def prog():
     prog_lbl()
