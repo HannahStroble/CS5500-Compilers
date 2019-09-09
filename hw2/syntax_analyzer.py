@@ -6,25 +6,41 @@
 
 # global variables
 debug_token = True
+debug_grammar = True
 
 # prints
-def print_tokens(token):
+def print_token(token):
     if debug_token == True:
         print("TOKEN: "+str(token[0])+"\t\tLEXEME: "+str(token[1]))
+        
+def print_grammar(grammar):
+    if debug_grammar == True:
+        print(grammar)
 
 # grammars
 
 def prog_lbl(token):
-    debug_token(token)
+    print_grammars("N_PROGLBL -> T_PROG")
+    #print_token(token)
 
-def prog():
-    prog_lbl()
-    getToken()
+def prog(token):
+    print_grammars("N_PROG -> N_PROGLBL T_IDENT T_SCOLON N_BLOCK T_DOT")
+    prog_lbl(token)
+    
+    # get token
+    token = getToken()
+    if (token[0] == "T_IDENT"):
+        ident(token)
+    # get semicolon
+    token = getToken()
+    if (token[0] == "T_SCOLON"):
+        
     #;
     block()
 
 # DONE
 def block():
+    print_grammars("N_BLOCK -> N_VARDECPART N_PROCDECPART N_STMTPART")
     var_dec_part()
     proc_dec_part()
     stmt_part()
