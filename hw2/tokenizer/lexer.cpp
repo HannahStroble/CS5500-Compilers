@@ -7,7 +7,8 @@ const string INVALID_INTCONST =
   "**** Invalid integer constant";
 
 // Static Lexer variables
-bool Lexer::print_token_lexemes_flag = true;
+bool Lexer::print_token_lexemes_flag = false;
+bool Lexer::print_token_lexemes_token_flag = true;
 
 Lexer::Lexer() {
 	regular_expressions = {
@@ -162,6 +163,7 @@ void Lexer::lexemes_to_tokens(vector<string> input) {
 
 string Lexer::getToken() {
   string current_token;
+  string current_lexeme;
 
   // If no more tokens to be processed
   if(getToken_iterator == tokens.end()) {
@@ -171,11 +173,30 @@ string Lexer::getToken() {
 
   // Get current token
   current_token = *getToken_iterator;
+  current_lexeme = *getLexeme_iterator;
+  
+  // print token
+  print_token_lexemes(*getToken_iterator, *getLexeme_iterator);
 
   // Increment token iterator
   getToken_iterator++;
+  getLexeme_iterator++;
 
   return current_token;
+}
+
+string Lexer::lookAhead() {
+    string next_token;
+    
+    // If no more tokens to be processed
+  if(getToken_iterator == tokens.end()) {
+    // Return empty string
+    return "";
+  }
+    
+    next_token = *getToken_iterator;
+    
+    return next_token;
 }
 
 vector<string> Lexer::get_all_tokens() const {
@@ -256,6 +277,7 @@ void Lexer::add_token_lexeme(const string& token,
 
   // Reset getToken_iterator in-case vector got resized
   getToken_iterator = tokens.begin();
+  getLexeme_iterator = lexemes.begin();
 }
 
 
@@ -268,3 +290,15 @@ string Lexer::get_lexeme_str(string::iterator begin,
 
   return lexeme;
 }
+
+void Lexer::print_token_lexemes(const string& token,
+                                const string& lexeme)
+{
+    // If print flag is set, print token and lexeme
+  if(print_token_lexemes_token_flag == true) {
+    cout << "TOKEN: " << token << "\t" << setw(12)
+         << "LEXEME: " << lexeme << endl;
+  }
+}
+                                    
+                                    

@@ -16,7 +16,7 @@ class Lexer {
 	public:
 		////////////////////////////////////////////////////////////
 		/// @brief	Initializes the Lexer class
-		/// @post 	regular_expressions will be populated with
+		/// @post 	regular_e:qsortxpressions will be populated with
 		/// the correct mapping between regex and token.
 		////////////////////////////////////////////////////////////
 		Lexer();
@@ -36,6 +36,8 @@ class Lexer {
 		/// tokens have been processed, then empty string("").
 		////////////////////////////////////////////////////////////
 		string getToken();
+        
+        string lookAhead();
 
 		////////////////////////////////////////////////////////////
 		/// @brief	Get all tokens
@@ -51,7 +53,8 @@ class Lexer {
 		////////////////////////////////////////////////////////////
 		vector<string> get_all_lexemes() const;
 
-		static bool print_token_lexemes_flag; 
+		static bool print_token_lexemes_flag;
+        static bool print_token_lexemes_token_flag;        
 		///< Print Tokens, Lexemes, and
 		///< Errors while reading in data
 	private:
@@ -86,6 +89,9 @@ class Lexer {
 		////////////////////////////////////////////////////////////
 		void add_token_lexeme(const string& token, const
                                  string& lexeme);
+                                 
+        void print_token_lexemes(const string& token,
+                                const string& lexeme);
 
 		////////////////////////////////////////////////////////////
 		/// @brief	Converts iterator to string
@@ -110,4 +116,7 @@ class Lexer {
 
 		vector<string>::iterator getToken_iterator; 				///< Iterator to keep track
 		///< of the next token to give back for getToken()
+        
+        vector<string>::iterator getLexeme_iterator; 
+        /// keep track of lexeme
 };

@@ -31,9 +31,13 @@ def prog(token):
     token = getToken()
     if (token[0] == "T_IDENT"):
         ident(token)
+    else:
+        print("N_PROG: expected T_IDENT")
+        
     # get semicolon
     token = getToken()
     if (token[0] == "T_SCOLON"):
+        
         
     #;
     block()
@@ -50,6 +54,9 @@ def var_dec_part(token):
     # first check for var
     if (token == "var"):
         var_dec(token)
+    else:
+        print("N_VARDECPART: expected var")
+    if ()
         # ;
         var_dec_lst(token)
 
