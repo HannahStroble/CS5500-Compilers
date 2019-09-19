@@ -1,0 +1,12 @@
+
+
+>>> Entering new scope...
+
++++ Adding p to symbol table with type PROGRAM
+
++++ Adding x to symbol table with type INTEGER
+
++++ Adding y to symbol table with type INTEGER
+
++++ Adding x to symbol table with type INTEGER
+Line 7: Multiply defined identifier

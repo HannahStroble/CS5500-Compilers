@@ -1,0 +1,69 @@
+
+
+>>> Entering new scope...
+
++++ Adding Nonsense to symbol table with type PROGRAM
+
++++ Adding stuff to symbol table with type ARRAY 1 .. -20 OF INTEGER
+
++++ Adding data to symbol table with type INTEGER
+
++++ Adding max to symbol table with type INTEGER
+
++++ Adding bojack to symbol table with type INTEGER
+
++++ Adding space to symbol table with type CHAR
+
++++ Adding i to symbol table with type INTEGER
+
++++ Adding zed to symbol table with type INTEGER
+
++++ Adding sort to symbol table with type PROCEDURE
+
+
+>>> Entering new scope...
+
++++ Adding i to symbol table with type INTEGER
+
++++ Adding n to symbol table with type INTEGER
+
++++ Adding flag to symbol table with type BOOLEAN
+
++++ Adding one to symbol table with type INTEGER
+
++++ Adding middle1 to symbol table with type PROCEDURE
+
+
+>>> Entering new scope...
+
++++ Adding i to symbol table with type BOOLEAN
+
++++ Adding stuff to symbol table with type INTEGER
+
++++ Adding deepest to symbol table with type PROCEDURE
+
+
+>>> Entering new scope...
+
++++ Adding i to symbol table with type CHAR
+
++++ Adding A to symbol table with type ARRAY 5 .. 1 OF BOOLEAN
+
++++ Adding B to symbol table with type ARRAY 5 .. 1 OF BOOLEAN
+
+<<< Exiting scope...
+
+<<< Exiting scope...
+
++++ Adding middle2 to symbol table with type PROCEDURE
+
+
+>>> Entering new scope...
+
+<<< Exiting scope...
+
+<<< Exiting scope...
+
+<<< Exiting scope...
+
+---- Completed parsing ----

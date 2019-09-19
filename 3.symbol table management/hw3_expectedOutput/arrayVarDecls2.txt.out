@@ -1,0 +1,21 @@
+
+
+>>> Entering new scope...
+
++++ Adding p to symbol table with type PROGRAM
+
++++ Adding A to symbol table with type ARRAY 1 .. 5 OF INTEGER
+
++++ Adding B to symbol table with type ARRAY 20 .. 50 OF BOOLEAN
+
++++ Adding C to symbol table with type ARRAY 20 .. 50 OF BOOLEAN
+
++++ Adding D to symbol table with type ARRAY 100 .. 500 OF CHAR
+
++++ Adding E to symbol table with type ARRAY 100 .. 500 OF CHAR
+
++++ Adding F to symbol table with type ARRAY 100 .. 500 OF CHAR
+
+<<< Exiting scope...
+
+---- Completed parsing ----

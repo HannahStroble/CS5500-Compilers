@@ -1,0 +1,13 @@
+(*
+	Undeclared identifier in write
+*)
+
+program p;
+
+var bojack, todd : integer;
+
+begin
+  write(bojack, todd);
+  write(princessCarolyn)
+end.
+

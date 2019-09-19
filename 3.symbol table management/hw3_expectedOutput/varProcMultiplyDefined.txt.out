@@ -1,0 +1,10 @@
+
+
+>>> Entering new scope...
+
++++ Adding p to symbol table with type PROGRAM
+
++++ Adding proc to symbol table with type INTEGER
+
++++ Adding proc to symbol table with type PROCEDURE
+Line 10: Multiply defined identifier

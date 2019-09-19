@@ -1,0 +1,23 @@
+
+
+>>> Entering new scope...
+
++++ Adding p to symbol table with type PROGRAM
+
++++ Adding x to symbol table with type INTEGER
+
++++ Adding y to symbol table with type BOOLEAN
+
++++ Adding z to symbol table with type BOOLEAN
+
++++ Adding a to symbol table with type CHAR
+
++++ Adding b to symbol table with type CHAR
+
++++ Adding c to symbol table with type CHAR
+
++++ Adding d to symbol table with type CHAR
+
+<<< Exiting scope...
+
+---- Completed parsing ----
