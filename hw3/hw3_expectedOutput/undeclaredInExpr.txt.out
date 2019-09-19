@@ -1,8 +1,0 @@
-
-
->>> Entering new scope...
-
-+++ Adding p to symbol table with type PROGRAM
-
-+++ Adding x to symbol table with type INTEGER
-Line 10: Undefined identifier
