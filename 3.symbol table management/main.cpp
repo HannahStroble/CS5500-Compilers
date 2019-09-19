@@ -11,6 +11,7 @@
 
 #include "lexer.h"
 #include "parser.h"
+#include "SymbolTable.h"
 #include <fstream>
 #include <sstream>
 

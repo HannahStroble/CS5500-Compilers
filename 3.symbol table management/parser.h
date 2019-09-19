@@ -9,6 +9,7 @@
 #include <iostream>
 #include "lexer.h"
 #include <iomanip>
+#include "SymbolTable.h"
 
 using namespace std;
 
