@@ -29,31 +29,16 @@ public:
     else return(false);
   }
 
-  bool changeEntry(SYMBOL_TABLE_ENTRY x)
-  {
-    // Make sure the entry we want to change in the symbol table 
-    // is actually in the symbol table.
-    map<string, SYMBOL_TABLE_ENTRY>::iterator itr;
-    if ((itr = hashTable.find(x.getName())) != hashTable.end())
-    {
-      hashTable.erase(itr);
-      hashTable.insert(make_pair(x.getName(), x));
-      return true;
-    }
-    else return(false);
-  }
-
   // If a SYMBOL_TABLE_ENTRY with name theName is
-  // found in this symbol table, then return its type info;
-  // otherwise, return type as undefined.
-  TYPE_INFO findEntry(string theName)
+  // found in this symbol table, then return true;
+  // otherwise, return false.
+  bool findEntry(string theName)
   {
-    TYPE_INFO info;
-    info.type = UNDEFINED;
+	TYPE_INFO = {UNDEFINED, NOT_APPLICABLE, NOT_APPLICABLE};
     map<string, SYMBOL_TABLE_ENTRY>::iterator itr;
     if ((itr = hashTable.find(theName)) == hashTable.end())
-      return(info);
-    else return(itr->second.getTypeInfo());
+      return(hashTable.getTypeCode());
+    else return(itr->second.getTypeCode());
   }
 
 };
