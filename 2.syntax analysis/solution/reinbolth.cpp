@@ -5,7 +5,7 @@ Assignment: Homework #2
 
 This assignment was not able to be completed in time. 
 The rules are still being written out. 
-Some are complete, but not all. Thus it does not function. 
+Some are complete, but not all. Thus it compilers but does not function. 
 
 How to run manually:
 >>> g++ reinbolth.cpp lexer.cpp
@@ -28,6 +28,7 @@ bool debugRule = true;
 string currentToken = "";
 string nextToken = "";
 
+/*
 // print statements
 void printRule(string start, string dest)
 {
@@ -72,7 +73,7 @@ void n_block(Lexer &lex)
   n_stmtpart(lex);
   
 }
-/*
+
 void n_vardecpart(Lexer &lex)
 {
   
@@ -596,7 +597,7 @@ void n_condition(Lexer &lex, vector<string> &currentToken)
   // )
 }
 
-*/
+
 
 void n_prog(Lexer &lex)
 {
@@ -639,7 +640,7 @@ void n_prog(Lexer &lex)
       exit(1);
   }
 }
-
+*/
 
 int main(int argc, char* argv[])
 {
