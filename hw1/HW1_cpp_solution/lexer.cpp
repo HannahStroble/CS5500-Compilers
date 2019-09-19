@@ -7,7 +7,8 @@ const string INVALID_INTCONST =
   "**** Invalid integer constant";
 
 // Static Lexer variables
-bool Lexer::print_token_lexemes_flag = true;
+bool Lexer::print_token_lexemes_flag = false;
+bool Lexer::print_token_lexemes_token_flag = true;
 
 Lexer::Lexer() {
 	regular_expressions = {
@@ -174,6 +175,9 @@ string Lexer::getToken() {
 
   // Increment token iterator
   getToken_iterator++;
+  
+  // print token
+  print_token_lexemes(tokens.back(), lexemes.back());
 
   return current_token;
 }
@@ -268,3 +272,15 @@ string Lexer::get_lexeme_str(string::iterator begin,
 
   return lexeme;
 }
+
+void Lexer::print_token_lexemes(const string& token,
+                                const string& lexeme)
+{
+    // If print flag is set, print token and lexeme
+  if(print_token_lexemes_token_flag == true) {
+    cout << "TOKEN: " << token << "\t" << setw(12)
+         << "LEXEME: " << lexeme << endl;
+  }
+}
+                                    
+                                    

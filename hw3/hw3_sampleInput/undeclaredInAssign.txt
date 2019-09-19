@@ -1,0 +1,12 @@
+(*
+	Undeclared identifier in assignment
+*)
+
+program p;
+
+var bojack : integer;
+
+begin
+  bojack := horse
+end.
+

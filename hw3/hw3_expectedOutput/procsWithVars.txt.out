@@ -1,0 +1,56 @@
+
+
+>>> Entering new scope...
+
++++ Adding p to symbol table with type PROGRAM
+
++++ Adding bojack to symbol table with type INTEGER
+
++++ Adding p1 to symbol table with type PROCEDURE
+
+
+>>> Entering new scope...
+
++++ Adding mrPB to symbol table with type INTEGER
+
++++ Adding p1a to symbol table with type PROCEDURE
+
+
+>>> Entering new scope...
+
++++ Adding todd to symbol table with type BOOLEAN
+
+<<< Exiting scope...
+
++++ Adding p1b to symbol table with type PROCEDURE
+
+
+>>> Entering new scope...
+
++++ Adding princessCarolyn to symbol table with type CHAR
+
++++ Adding p1b_a to symbol table with type PROCEDURE
+
+
+>>> Entering new scope...
+
++++ Adding bojack to symbol table with type INTEGER
+
+<<< Exiting scope...
+
+<<< Exiting scope...
+
+<<< Exiting scope...
+
++++ Adding p2 to symbol table with type PROCEDURE
+
+
+>>> Entering new scope...
+
++++ Adding diane to symbol table with type INTEGER
+
+<<< Exiting scope...
+
+<<< Exiting scope...
+
+---- Completed parsing ----
