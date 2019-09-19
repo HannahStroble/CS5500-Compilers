@@ -31,6 +31,7 @@ void Parser::prog(Lexer &lex, vector<string> &currentToken)
       currentToken = lex.getToken();
       block(lex, currentToken);
       if (currentToken[0] == "T_DOT")
+        //TODO add prog enty here ?
         currentToken = lex.getToken();
       else syntaxError(currentToken);
     }
@@ -44,16 +45,19 @@ void Parser::progLbl(Lexer &lex, vector<string> &currentToken)
   printRule("N_PROGLBL", "T_PROG");
   if (currentToken[0] == "T_PROG")
     currentToken = lex.getToken();
+    //TODO add prog entry here ?
   else syntaxError(currentToken);
 }
  
 void Parser::block(Lexer &lex, vector<string> &currentToken) 
 {
+  //TODO Add block start here
   printRule("N_BLOCK", 
             "N_VARDECPART N_PROCDECPART N_STMTPART");
   varDecPart(lex, currentToken);
   procDecPart(lex, currentToken);
   stmtPart(lex, currentToken);
+  //TODO Add block end here
 }
  
 void Parser::varDecPart(Lexer &lex, vector<string> &currentToken) {
