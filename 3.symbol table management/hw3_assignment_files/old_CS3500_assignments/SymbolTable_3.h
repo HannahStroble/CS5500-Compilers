@@ -3,7 +3,7 @@
 
 #include <map>
 #include <string>
-#include "SymbolTableEntry.h"
+#include "SymbolTableEntry_3.h"
 using namespace std;
 
 class SYMBOL_TABLE
@@ -34,11 +34,10 @@ public:
   // otherwise, return false.
   bool findEntry(string theName)
   {
-	TYPE_INFO = {UNDEFINED, NOT_APPLICABLE, NOT_APPLICABLE};
     map<string, SYMBOL_TABLE_ENTRY>::iterator itr;
     if ((itr = hashTable.find(theName)) == hashTable.end())
-      return(hashTable.getTypeCode());
-    else return(itr->second.getTypeCode());
+      return(false);
+    else return(true);
   }
 
 };
