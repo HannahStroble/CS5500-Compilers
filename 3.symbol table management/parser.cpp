@@ -1,8 +1,51 @@
 #include "parser.h"
+#include "SymbolTable.h"
 
 // Static Parser variable
 bool Parser::print_productions_flag = true;
+bool Parser::suppressTokenOutput = true;
 
+// Push a new SYMBOL_TABLE onto scopeStack.
+void Parser::beginScope()
+{
+  scopeStack.push(SYMBOL_TABLE());
+    if(!suppressTokenOutput)
+      printf("\n___Entering new scope...\n\n");
+}
+
+// Pop a SYMBOL_TABLE from scopeStack.
+void Parser::endScope() 
+{
+    scopeStack.pop();
+    if(!suppressTokenOutput)
+        printf("\n___Exiting scope...\n\n");
+}
+
+// Pop all SYMBOL_TABLE's from scopeStack.
+void Parser::cleanUp() 
+{
+    if (scopeStack.empty())
+        return;
+    else {
+        scopeStack.pop();
+        cleanUp();
+    }
+}
+
+bool Parser::findEntryInAnyScope(const string the_name)
+{
+    if (scopeStack.empty()) return(false);
+    bool found = scopeStack.top().findEntry(the_name);
+    if (found)
+        return(true);
+    else {
+        SYMBOL_TABLE symbolTable = scopeStack.top();
+        scopeStack.pop();
+        found = findEntryInAnyScope(the_name);
+        scopeStack.push(symbolTable); // restore stack to original state
+        return(found);
+    }
+}
 
 void Parser::printRule(const string lhs, const string rhs)
 {
@@ -662,50 +705,6 @@ void Parser::boolConst(Lexer &lex, vector<string> &currentToken) {
     currentToken = lex.getToken();
   }
   else syntaxError(currentToken);
-}
-
-TYPE_INFO Parser::findEntryInAnyScope(const string the_name)
-{
-    TYPE_INFO info = {UNDEFINED, NOT_APPLICABLE, NOT_APPLICABLE};
-    if (scopeStack.empty()) return(info);
-    info = scopeStack.top().findEntry(the_name);
-    if (info.type != UNDEFINED) 
-      return(info);
-    else 
-    { // check in "next higher" scope
-        SYMBOL_TABLE symbolTable = scopeStack.top();
-        scopeStack.pop();
-        info = findEntryInAnyScope(the_name);
-        scopeStack.push(symbolTable); // restore the stack
-        return(info);
-    }
-}
-
-// Push a new SYMBOL_TABLE onto scopeStack.
-void Parser::beginScope() 
-{
-    scopeStack.push(SYMBOL_TABLE());
-    if(!suppressTokenOutput)
-        printf("\n___Entering new scope...\n\n");
-}
-
-// Pop a SYMBOL_TABLE from scopeStack.
-void Parser::endScope() 
-{
-    scopeStack.pop();
-    if(!suppressTokenOutput)
-        printf("\n___Exiting scope...\n\n");
-}
-
-// Pop all SYMBOL_TABLE's from scopeStack.
-void Parser::cleanUp() 
-{
-    if (scopeStack.empty())
-        return;
-    else {
-        scopeStack.pop();
-        cleanUp();
-    }
 }
 
 

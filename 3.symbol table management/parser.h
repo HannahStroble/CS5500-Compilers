@@ -83,10 +83,16 @@ class Parser {
 	void idxVar(Lexer &lex, vector<string> &currentToken);
 	void constant(Lexer &lex, vector<string> &currentToken);
 	void boolConst(Lexer &lex, vector<string> &currentToken);
+    
+    void beginScope();
+    void endScope();
+    void cleanUp();
+    bool findEntryInAnyScope(const string the_name);
 
 
 	static bool print_productions_flag; 
 	///< Print productions while parsing
+    static bool suppressTokenOutput;
 
 };
 
