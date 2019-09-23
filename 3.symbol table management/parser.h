@@ -92,7 +92,7 @@ class Parser {
 
 	static bool print_productions_flag; 
 	///< Print productions while parsing
-    static bool suppressTokenOutput;
+        static bool suppressTokenOutput;
 
 };
 
