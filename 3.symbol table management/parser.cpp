@@ -2,15 +2,15 @@
 #include "SymbolTable.h"
 
 // Static Parser variable
-bool Parser::print_productions_flag = true;
-bool Parser::suppressTokenOutput = true;
+bool Parser::print_productions_flag = false;
+bool Parser::suppressTokenOutput = false;
 
 // Push a new SYMBOL_TABLE onto scopeStack.
 void Parser::beginScope()
 {
   scopeStack.push(SYMBOL_TABLE());
     if(!suppressTokenOutput)
-      printf("\n___Entering new scope...\n\n");
+      printf("\n>>> Entering new scope...\n");
 }
 
 // Pop a SYMBOL_TABLE from scopeStack.
@@ -18,7 +18,7 @@ void Parser::endScope()
 {
     scopeStack.pop();
     if(!suppressTokenOutput)
-        printf("\n___Exiting scope...\n\n");
+        printf("\n<<< Exiting scope...\n");
 }
 
 // Pop all SYMBOL_TABLE's from scopeStack.
@@ -61,6 +61,7 @@ void Parser::syntaxError(const vector<string> currentToken) const
   exit(1);
 }
 
+
 void Parser::prog(Lexer &lex, vector<string> &currentToken) 
 {
   printRule("N_PROG", 
@@ -88,19 +89,18 @@ void Parser::progLbl(Lexer &lex, vector<string> &currentToken)
   printRule("N_PROGLBL", "T_PROG");
   if (currentToken[0] == "T_PROG")
     currentToken = lex.getToken();
-    //TODO add prog entry here ?
   else syntaxError(currentToken);
 }
  
 void Parser::block(Lexer &lex, vector<string> &currentToken) 
 {
-  //TODO Add block start here
+  beginScope();
   printRule("N_BLOCK", 
             "N_VARDECPART N_PROCDECPART N_STMTPART");
   varDecPart(lex, currentToken);
   procDecPart(lex, currentToken);
   stmtPart(lex, currentToken);
-  //TODO Add block end here
+  endScope();
 }
  
 void Parser::varDecPart(Lexer &lex, vector<string> &currentToken) {
