@@ -2,7 +2,7 @@
 #include "SymbolTable.h"
 
 // Static Parser variable
-bool Parser::print_productions_flag = false;
+bool Parser::print_productions_flag = false; 
 bool Parser::suppressTokenOutput = false;
 
 // Push a new SYMBOL_TABLE onto scopeStack.
