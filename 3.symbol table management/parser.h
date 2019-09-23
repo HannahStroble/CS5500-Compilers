@@ -93,6 +93,7 @@ class Parser {
 	static bool print_productions_flag; 
 	///< Print productions while parsing
     static bool suppressTokenOutput;
+    stack<SYMBOL_TABLE> scopeStack; // stack of scope hashtables
 
 };
 
