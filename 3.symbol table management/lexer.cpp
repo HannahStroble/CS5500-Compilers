@@ -9,6 +9,7 @@ const string INVALID_INTCONST =
 // Static Lexer variables
 bool Lexer::print_token_lexemes_flag = false;
 
+
 Lexer::Lexer() {
 	getToken_index = 0;
 
