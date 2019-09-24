@@ -1,0 +1,16 @@
+
+
+>>> Entering new scope...					>>> Entering new scope...
+
+>>> Entering new scope...				      |	+++ Adding p to symbol table with type PROGRAM
+<<< Exiting scope...					      |
+							      >	+++ Adding proc to symbol table with type PROCEDURE
+
+
+>>> Entering new scope...					>>> Entering new scope...
+<<< Exiting scope...					      <
+
+<<< Exiting scope...						<<< Exiting scope...
+
+---- Completed parsing ----				      |	+++ Adding proc to symbol table with type PROCEDURE
+							      >	Line 13: Multiply defined identifier

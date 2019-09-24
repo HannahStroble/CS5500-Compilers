@@ -53,6 +53,8 @@ int main(int argc, char** argv) {
   // giving it the 1st token
   vector<string> currentToken = lex.getToken();
   Parser parser;
+
+  // start global scope
   parser.prog(lex, currentToken);
 
   // At the end of parsing, currentToken should be the
@@ -60,8 +62,7 @@ int main(int argc, char** argv) {
   if (currentToken[0] != "")
     cout << "Syntax error: unexpected chars at end"
             " of program!\n";
-  else cout << "---- Completed parsing ----\n";
-
+  else cout << "\n---- Completed parsing ----\n";
 
   fin.close();
 

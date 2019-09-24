@@ -88,9 +88,11 @@ class Parser {
     void endScope();
     void cleanUp();
     bool findEntryInAnyScope(const string the_name);
+    void printAddition(const string item, const string item_type);
 
 
 	static bool print_productions_flag; 
+    static bool print_additions_flag;
 	///< Print productions while parsing
     static bool suppressTokenOutput;
     stack<SYMBOL_TABLE> scopeStack; // stack of scope hashtables

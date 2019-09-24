@@ -3,6 +3,7 @@
 
 // Static Parser variable
 bool Parser::print_productions_flag = false; 
+bool Parser::print_additions_flag = true; 
 bool Parser::suppressTokenOutput = false;
 
 // Push a new SYMBOL_TABLE onto scopeStack.
@@ -10,7 +11,7 @@ void Parser::beginScope()
 {
   scopeStack.push(SYMBOL_TABLE());
     if(!suppressTokenOutput)
-      printf("\n>>> Entering new scope...\n");
+      printf("\n\n>>> Entering new scope...");
 }
 
 // Pop a SYMBOL_TABLE from scopeStack.
@@ -45,6 +46,13 @@ bool Parser::findEntryInAnyScope(const string the_name)
         scopeStack.push(symbolTable); // restore stack to original state
         return(found);
     }
+}
+
+void Parser::printAddition(const string item, const string item_type)
+{
+  if (print_additions_flag)
+    cout << "\n +++ Adding " << item << " to symbol table with type " << item_type << "\n" << endl; 
+  return;
 }
 
 void Parser::printRule(const string lhs, const string rhs)
