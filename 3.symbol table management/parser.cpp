@@ -6,12 +6,14 @@ bool Parser::print_productions_flag = false;
 bool Parser::print_additions_flag = true; 
 bool Parser::suppressTokenOutput = false;
 
+std::vector<string> ident_tmp;
+
 // Push a new SYMBOL_TABLE onto scopeStack.
 void Parser::beginScope()
 {
   scopeStack.push(SYMBOL_TABLE());
     if(!suppressTokenOutput)
-      printf("\n\n>>> Entering new scope...");
+      printf("\n>>> Entering new scope...\n");
 }
 
 // Pop a SYMBOL_TABLE from scopeStack.
@@ -83,7 +85,6 @@ void Parser::prog(Lexer &lex, vector<string> &currentToken)
       currentToken = lex.getToken();
       block(lex, currentToken);
       if (currentToken[0] == "T_DOT")
-        //TODO add prog enty here ?
         currentToken = lex.getToken();
       else syntaxError(currentToken);
     }
@@ -152,8 +153,12 @@ void Parser::varDec(Lexer &lex, vector<string> &currentToken)
   if (currentToken[0] == "T_COLON")
   {
     currentToken = lex.getToken();
+    //get types in here...
     identType(lex, currentToken);
+    //should be built by here
   }
+  //clear the vector of stashed idents
+  ident_tmp.clear()
   else syntaxError(currentToken);
 }
 
@@ -161,7 +166,10 @@ void Parser::ident(Lexer &lex, vector<string> &currentToken)
 {
   printRule("N_IDENT", "T_IDENT");
   if (currentToken[0] == "T_IDENT")
+  {
+    ident_tmp.push_back(currentToken[1]);
     currentToken = lex.getToken();
+  }
   else syntaxError(currentToken);
 }
 
@@ -182,11 +190,13 @@ void Parser::identType(Lexer &lex, vector<string> &currentToken)
   if (currentToken[0] == "T_ARRAY")
   {
     printRule("N_TYPE", "N_ARRAY");
+    //array time!
     array(lex, currentToken);
   }
   else 
   {
     printRule("N_TYPE", "N_SIMPLE");
+    //simple type
     simple(lex, currentToken);
   }
 }
@@ -203,6 +213,7 @@ void Parser::array(Lexer &lex, vector<string> &currentToken)
     {
       currentToken = lex.getToken();
       idxRange(lex, currentToken);
+      //retrieve tmp start and end
       if (currentToken[0] == "T_RBRACK")
       {
         currentToken = lex.getToken();
@@ -210,6 +221,8 @@ void Parser::array(Lexer &lex, vector<string> &currentToken)
         {
           currentToken = lex.getToken();
           simple(lex, currentToken);
+          //get type
+          //build entry here
         }
         else syntaxError(currentToken);
       }
@@ -222,8 +235,10 @@ void Parser::array(Lexer &lex, vector<string> &currentToken)
 
 void Parser::idx(Lexer &lex, vector<string> &currentToken) 
 {
+  //change this to return an int instead of void?
   printRule("N_IDX", "T_INTCONST");
   if (currentToken[0] == "T_INTCONST")
+    //return integer
     currentToken = lex.getToken();
   else syntaxError(currentToken);
 }
@@ -231,10 +246,12 @@ void Parser::idx(Lexer &lex, vector<string> &currentToken)
 void Parser::idxRange(Lexer &lex, vector<string> &currentToken) 
 {
   printRule("N_IDXRANGE", "N_IDX T_DOTDOT N_IDX");
+  //get integer from idx, save to temp start
   idx(lex, currentToken);
   if (currentToken[0] == "T_DOTDOT")
   {
     currentToken = lex.getToken();
+    //get integer from idx, save to temp end
     idx(lex, currentToken);
   }
   else syntaxError(currentToken);
@@ -242,10 +259,24 @@ void Parser::idxRange(Lexer &lex, vector<string> &currentToken)
 
 void Parser::simple(Lexer &lex, vector<string> &currentToken) 
 {
-  if ((currentToken[0] == "T_INT") ||
-      (currentToken[0] == "T_CHAR") || 
-      (currentToken[0] == "T_BOOL"))
+  //change this to return an ENUM of types?
+  
+  //expanded it to catch each type
+  if (currentToken[0] == "T_INT")
   {
+    //return integer
+    printRule("N_SIMPLE", currentToken[0]);
+    currentToken = lex.getToken();
+  }
+  else if (currentToken[0] == "T_CHAR") 
+  {
+    //return character
+    printRule("N_SIMPLE", currentToken[0]);
+    currentToken = lex.getToken();
+  }
+  else if (currentToken[0] == "T_BOOL")
+  {
+    //return boolean
     printRule("N_SIMPLE", currentToken[0]);
     currentToken = lex.getToken();
   }
