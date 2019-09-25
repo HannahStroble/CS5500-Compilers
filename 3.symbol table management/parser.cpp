@@ -126,7 +126,7 @@ void Parser::syntaxError(const vector<string> currentToken) const
 {
   cout << "Line " << currentToken[2]
        << ": syntax error\n";  
-  exit(1);
+  exit(0);
 }
 
 
@@ -241,7 +241,7 @@ void Parser::varDec(Lexer &lex, vector<string> &currentToken)
       {
         //already defined, bail out here
         cout << "Line " << currentToken[2] <<": Multiply defined identifier   "<<endl;
-        exit(1);
+        exit(0);
       }
     }
   }
@@ -415,7 +415,7 @@ void Parser::procHdr(Lexer &lex, vector<string> &currentToken)
       {
         //already defined, bail out here
         cout << "Line " << currentToken[2] <<": Multiply defined identifier   "<<endl;
-        exit(1);
+        exit(0);
       }
       currentToken = lex.getToken();
       if (currentToken[0] == "T_SCOLON")
@@ -806,7 +806,7 @@ void Parser::variable(Lexer &lex, vector<string> &currentToken)
     if(!findEntryInAnyScope(currentToken[1]))
     {
         cout << "Line " << currentToken[2] <<": Undefined identifier"<<endl;
-        exit(1);
+        exit(0);
     }
     currentToken = lex.getToken();
     idxVar(lex, currentToken);
