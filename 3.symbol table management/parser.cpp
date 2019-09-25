@@ -7,7 +7,10 @@ bool Parser::print_additions_flag = true;
 bool Parser::suppressTokenOutput = false;
 
 std::vector<string> ident_tmp;
-
+array_parts array_temp;
+int tmp_simple;
+bool isArray;
+bool blockINI = false;
 // Push a new SYMBOL_TABLE onto scopeStack.
 void Parser::beginScope()
 {
@@ -39,15 +42,54 @@ bool Parser::findEntryInAnyScope(const string the_name)
 {
     if (scopeStack.empty()) return(false);
     bool found = scopeStack.top().findEntry(the_name);
-    if (found)
-        return(true);
-    else {
-        SYMBOL_TABLE symbolTable = scopeStack.top();
-        scopeStack.pop();
-        found = findEntryInAnyScope(the_name);
-        scopeStack.push(symbolTable); // restore stack to original state
-        return(found);
-    }
+    return found;
+    // if (found)
+    //     return(true);
+    // else {
+    //     SYMBOL_TABLE symbolTable = scopeStack.top();
+    //     scopeStack.pop();
+    //     found = findEntryInAnyScope(the_name);
+    //     scopeStack.push(symbolTable); // restore stack to original state
+    //     return(found);
+    // }
+}
+
+void Parser::printAddition(const string item, const int item_type)
+{
+  if (print_additions_flag)
+  {
+    cout << "\n +++ Adding " << item << " to symbol table with type ";
+    if(item_type == T_INT)
+      cout << "INTEGER";
+    else if (item_type == T_CHAR)
+      cout << "CHAR";
+    else if (item_type == T_BOOL)
+      cout << "BOOLEAN";
+    else if (item_type == T_PROG)
+      cout << "PROGRAM";
+    else if (item_type == T_PROC)
+      cout << "PROCEDURE";
+
+  cout << '\n' << endl;
+  }
+  return;
+}
+
+void Parser::printAddition(const string item, const array_parts parts)
+{
+  if (print_additions_flag)
+  {
+    cout << "\n +++ Adding " << item << " to symbol table with type ARRAY " << parts.start << " .. " << parts.end << " OF ";
+    if(parts.type == T_INT)
+      cout << "INTEGER";
+    else if (parts.type == T_CHAR)
+      cout << "CHAR";
+    else if (parts.type == T_BOOL)
+      cout << "BOOLEAN";
+
+  cout << '\n' << endl;
+  }
+  return;
 }
 
 void Parser::printAddition(const string item, const string item_type)
@@ -56,6 +98,7 @@ void Parser::printAddition(const string item, const string item_type)
     cout << "\n +++ Adding " << item << " to symbol table with type " << item_type << "\n" << endl; 
   return;
 }
+
 
 void Parser::printRule(const string lhs, const string rhs)
 {
@@ -74,11 +117,15 @@ void Parser::syntaxError(const vector<string> currentToken) const
 
 void Parser::prog(Lexer &lex, vector<string> &currentToken) 
 {
+  beginScope();
   printRule("N_PROG", 
             "N_PROGLBL T_IDENT T_SCOLON N_BLOCK T_DOT"); 
   progLbl(lex, currentToken);
   if (currentToken[0] == "T_IDENT") 
   {
+    scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(currentToken[1], T_PROG));
+    printAddition(currentToken[1], T_PROG);
+
     currentToken = lex.getToken();
     if (currentToken[0] == "T_SCOLON")
     {
@@ -103,7 +150,14 @@ void Parser::progLbl(Lexer &lex, vector<string> &currentToken)
  
 void Parser::block(Lexer &lex, vector<string> &currentToken) 
 {
-  beginScope();
+  if(!blockINI)
+  {
+    blockINI = true;
+  }  
+  else
+  {
+    beginScope();
+  }
   printRule("N_BLOCK", 
             "N_VARDECPART N_PROCDECPART N_STMTPART");
   varDecPart(lex, currentToken);
@@ -155,11 +209,30 @@ void Parser::varDec(Lexer &lex, vector<string> &currentToken)
     currentToken = lex.getToken();
     //get types in here...
     identType(lex, currentToken);
-    //should be built by here
+    for(auto& i : ident_tmp)
+    {
+      bool inScope = findEntryInAnyScope(i);
+      if(isArray)
+      {
+        scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(i, array_temp));
+        printAddition(i, array_temp);
+      }
+      else
+      {
+        scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(i, tmp_simple));
+        printAddition(i, tmp_simple);
+      }
+      if(inScope)
+      {
+        //already defined, bail out here
+        cout << "Line " << currentToken[2] <<": Multiply defined identifier   "<<endl;
+        exit(1);
+      }
+    }
   }
   //clear the vector of stashed idents
-  ident_tmp.clear()
   else syntaxError(currentToken);
+  ident_tmp.clear();
 }
 
 void Parser::ident(Lexer &lex, vector<string> &currentToken) 
@@ -167,12 +240,6 @@ void Parser::ident(Lexer &lex, vector<string> &currentToken)
   printRule("N_IDENT", "T_IDENT");
   if (currentToken[0] == "T_IDENT")
   {
-    if(findEntryInAnyScope(currentToken[1]))
-    {
-      //already defined, bail out here
-      cout << "Line " << currentToken[2] <<": Multiply defined identifier" << endl;
-      exit(1);
-    }
     ident_tmp.push_back(currentToken[1]);
     currentToken = lex.getToken();
   }
@@ -198,12 +265,14 @@ void Parser::identType(Lexer &lex, vector<string> &currentToken)
     printRule("N_TYPE", "N_ARRAY");
     //array time!
     array(lex, currentToken);
+    isArray = true;
   }
   else 
   {
     printRule("N_TYPE", "N_SIMPLE");
     //simple type
-    simple(lex, currentToken);
+    tmp_simple = simple(lex, currentToken);
+    isArray = false;
   }
 }
 
@@ -219,16 +288,13 @@ void Parser::array(Lexer &lex, vector<string> &currentToken)
     {
       currentToken = lex.getToken();
       idxRange(lex, currentToken);
-      //retrieve tmp start and end
       if (currentToken[0] == "T_RBRACK")
       {
         currentToken = lex.getToken();
         if (currentToken[0] == "T_OF")
         {
           currentToken = lex.getToken();
-          simple(lex, currentToken);
-          //get type
-          //build entry here
+          array_temp.type = simple(lex, currentToken);
         }
         else syntaxError(currentToken);
       }
@@ -239,54 +305,59 @@ void Parser::array(Lexer &lex, vector<string> &currentToken)
   else syntaxError(currentToken);
 }
 
-void Parser::idx(Lexer &lex, vector<string> &currentToken) 
+int Parser::idx(Lexer &lex, vector<string> &currentToken) 
 {
+  int return_val;
   //change this to return an int instead of void?
   printRule("N_IDX", "T_INTCONST");
   if (currentToken[0] == "T_INTCONST")
-    //return integer
+  {
+    return_val = stoi(currentToken[1]);
     currentToken = lex.getToken();
+  }
   else syntaxError(currentToken);
+  return return_val;
 }
 
 void Parser::idxRange(Lexer &lex, vector<string> &currentToken) 
 {
   printRule("N_IDXRANGE", "N_IDX T_DOTDOT N_IDX");
   //get integer from idx, save to temp start
-  idx(lex, currentToken);
+  array_temp.start = idx(lex, currentToken);
   if (currentToken[0] == "T_DOTDOT")
   {
     currentToken = lex.getToken();
     //get integer from idx, save to temp end
-    idx(lex, currentToken);
+    array_temp.end = idx(lex, currentToken);
   }
   else syntaxError(currentToken);
 }
 
-void Parser::simple(Lexer &lex, vector<string> &currentToken) 
+int Parser::simple(Lexer &lex, vector<string> &currentToken) 
 {
   //change this to return an ENUM of types?
-
+  int return_val;
   //expanded it to catch each type
   if (currentToken[0] == "T_INT")
   {
-    //return integer
+    return_val = T_INT;
     printRule("N_SIMPLE", currentToken[0]);
     currentToken = lex.getToken();
   }
   else if (currentToken[0] == "T_CHAR") 
   {
-    //return character
+    return_val = T_CHAR;
     printRule("N_SIMPLE", currentToken[0]);
     currentToken = lex.getToken();
   }
   else if (currentToken[0] == "T_BOOL")
   {
-    //return boolean
+    return_val = T_BOOL;
     printRule("N_SIMPLE", currentToken[0]);
     currentToken = lex.getToken();
   }
   else syntaxError(currentToken);
+  return return_val;
 }
 
 void Parser::procDecPart(Lexer &lex, 
@@ -322,6 +393,15 @@ void Parser::procHdr(Lexer &lex, vector<string> &currentToken)
     currentToken = lex.getToken();
     if (currentToken[0] == "T_IDENT")
     {
+      bool inScope = findEntryInAnyScope(currentToken[1]);
+      scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(currentToken[1], T_PROC));
+      printAddition(currentToken[1], T_PROC);
+      if(inScope)
+      {
+        //already defined, bail out here
+        cout << "Line " << currentToken[2] <<": Multiply defined identifier   "<<endl;
+        exit(1);
+      }
       currentToken = lex.getToken();
       if (currentToken[0] == "T_SCOLON")
         currentToken = lex.getToken();

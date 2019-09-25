@@ -9,9 +9,17 @@
 #include <iostream>
 #include "lexer.h"
 #include <iomanip>
+#include <string>
 #include "SymbolTable.h"
 
 using namespace std;
+
+#define T_INT  1
+#define T_BOOL 2
+#define T_CHAR 3
+#define T_PROG 4
+#define T_PROC 5
+
 
 
 class Parser {
@@ -45,9 +53,9 @@ class Parser {
 	void identLst(Lexer &lex, vector<string> &currentToken);
 	void identType(Lexer &lex, vector<string> &currentToken);
 	void array(Lexer &lex, vector<string> &currentToken);
-	void idx(Lexer &lex, vector<string> &currentToken);
+	int idx(Lexer &lex, vector<string> &currentToken);
 	void idxRange(Lexer &lex, vector<string> &currentToken);
-	void simple(Lexer &lex, vector<string> &currentToken);
+	int simple(Lexer &lex, vector<string> &currentToken);
 	void procDecPart(Lexer &lex, vector<string> &currentToken);
 	void procDec(Lexer &lex, vector<string> &currentToken);
 	void procHdr(Lexer &lex, vector<string> &currentToken);
@@ -88,6 +96,8 @@ class Parser {
     void endScope();
     void cleanUp();
     bool findEntryInAnyScope(const string the_name);
+    void printAddition(const string item, const int item_type);
+    void printAddition(const string item, const array_parts parts);
     void printAddition(const string item, const string item_type);
 
 
@@ -96,6 +106,7 @@ class Parser {
 	///< Print productions while parsing
     static bool suppressTokenOutput;
     stack<SYMBOL_TABLE> scopeStack; // stack of scope hashtables
+
 
 };
 
