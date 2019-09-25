@@ -516,7 +516,9 @@ void Parser::procStmt(Lexer &lex, vector<string> &currentToken)
 void Parser::procIdent(Lexer &lex, vector<string> &currentToken) {
   printRule("N_PROCIDENT", "T_IDENT");
   if (currentToken[0] == "T_IDENT")
+  {
     currentToken = lex.getToken();
+  }
   else syntaxError(currentToken);
 }
 
@@ -802,7 +804,7 @@ void Parser::variable(Lexer &lex, vector<string> &currentToken)
   printRule("N_VARIABLE", "T_IDENT N_IDXVAR");
   if (currentToken[0] == "T_IDENT")
   {
-    if(findEntryInScope(currentToken[1]))
+    if(!findEntryInAnyScope(currentToken[1]))
     {
         cout << "Line " << currentToken[2] <<": Undefined identifier"<<endl;
         exit(1);

@@ -7,7 +7,4 @@
 +++ Adding bojack to symbol table with type INTEGER
 
 +++ Adding todd to symbol table with type INTEGER
-
-<<< Exiting scope...
-
----- Completed parsing ----
+Line 11: Undefined identifier

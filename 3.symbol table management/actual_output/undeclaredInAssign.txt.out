@@ -5,7 +5,4 @@
 +++ Adding p to symbol table with type PROGRAM
 
 +++ Adding bojack to symbol table with type INTEGER
-
-<<< Exiting scope...
-
----- Completed parsing ----
+Line 10: Undefined identifier
