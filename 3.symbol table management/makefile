@@ -12,18 +12,14 @@ OBJECTS = $(SOURCES:%.cpp=%.o)
 default: test
 
 test: driver
-	./driver input.txt
+	@./driver input.txt
 
 %.o: %.cpp
-	@echo "Compiling $<"
 	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
 driver: $(OBJECTS)
-	@echo "Building $@"
 	@$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@
-	@echo ""
-	@echo "Everything worked"
-	@echo ""
+	
 
 clean:
 	-@rm -f core
@@ -33,7 +29,6 @@ clean:
 
 # Automatically generate dependencies and include them in Makefile
 depend: $(SOURCES) $(HEADERS)
-	@echo "Generating dependencies"
 	@$(CXX) -MM *.cpp > $@
 
 
