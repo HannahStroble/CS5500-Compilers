@@ -58,7 +58,6 @@ bool Parser::findEntryInAnyScope(const string the_name)
 {
     if (scopeStack.empty()) return(false);
     bool found = scopeStack.top().findEntry(the_name);
-    return found;
     if (found)
         return(true);
      else {
