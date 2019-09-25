@@ -1,9 +1,11 @@
 
 
 >>> Entering new scope...					>>> Entering new scope...
-<<< Exiting scope...					      <
 
----- Completed parsing ----				      |	+++ Adding p to symbol table with type PROGRAM
-							      >
-							      >	+++ Adding bojack to symbol table with type INTEGER
-							      >	Line 10: Undefined identifier
++++ Adding p to symbol table with type PROGRAM			+++ Adding p to symbol table with type PROGRAM
+
++++ Adding bojack to symbol table with type INTEGER		+++ Adding bojack to symbol table with type INTEGER
+							      |	Line 10: Undefined identifier
+<<< Exiting scope...					      <
+							      <
+---- Completed parsing ----				      <

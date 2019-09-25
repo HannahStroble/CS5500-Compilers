@@ -1,11 +1,10 @@
 
 
 >>> Entering new scope...					>>> Entering new scope...
-<<< Exiting scope...					      <
 
----- Completed parsing ----				      |	+++ Adding p to symbol table with type PROGRAM
-							      >
-							      >	+++ Adding x to symbol table with type INTEGER
-							      >
-							      >	+++ Adding p to symbol table with type BOOLEAN
-							      >	Line 8: Multiply defined identifier
++++ Adding p to symbol table with type PROGRAM			+++ Adding p to symbol table with type PROGRAM
+
++++ Adding x to symbol table with type INTEGER			+++ Adding x to symbol table with type INTEGER
+
++++ Adding p to symbol table with type BOOLEAN			+++ Adding p to symbol table with type BOOLEAN
+Line 8: Multiply defined identifier   				Line 8: Multiply defined identifier

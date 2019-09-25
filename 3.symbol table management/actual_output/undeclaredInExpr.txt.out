@@ -1,6 +1,11 @@
 
 
 >>> Entering new scope...
+
++++ Adding p to symbol table with type PROGRAM
+
++++ Adding x to symbol table with type INTEGER
+
 <<< Exiting scope...
 
 ---- Completed parsing ----

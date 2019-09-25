@@ -1,6 +1,13 @@
 
 
 >>> Entering new scope...
+
++++ Adding p to symbol table with type PROGRAM
+
++++ Adding bojack to symbol table with type INTEGER
+
++++ Adding todd to symbol table with type INTEGER
+
 <<< Exiting scope...
 
 ---- Completed parsing ----

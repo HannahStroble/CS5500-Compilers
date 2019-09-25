@@ -16,7 +16,7 @@ void Parser::beginScope()
 {
   scopeStack.push(SYMBOL_TABLE());
     if(!suppressTokenOutput)
-      printf("\n>>> Entering new scope...\n");
+      printf("\n\n>>> Entering new scope...\n");
 }
 
 // Pop a SYMBOL_TABLE from scopeStack.
@@ -58,7 +58,7 @@ void Parser::printAddition(const string item, const int item_type)
 {
   if (print_additions_flag)
   {
-    cout << "\n +++ Adding " << item << " to symbol table with type ";
+    cout << "\n+++ Adding " << item << " to symbol table with type ";
     if(item_type == T_INT)
       cout << "INTEGER";
     else if (item_type == T_CHAR)
@@ -70,7 +70,7 @@ void Parser::printAddition(const string item, const int item_type)
     else if (item_type == T_PROC)
       cout << "PROCEDURE";
 
-  cout << '\n' << endl;
+  cout << endl;
   }
   return;
 }
@@ -79,7 +79,7 @@ void Parser::printAddition(const string item, const array_parts parts)
 {
   if (print_additions_flag)
   {
-    cout << "\n +++ Adding " << item << " to symbol table with type ARRAY " << parts.start << " .. " << parts.end << " OF ";
+    cout << "\n+++ Adding " << item << " to symbol table with type ARRAY " << parts.start << " .. " << parts.end << " OF ";
     if(parts.type == T_INT)
       cout << "INTEGER";
     else if (parts.type == T_CHAR)
@@ -87,7 +87,7 @@ void Parser::printAddition(const string item, const array_parts parts)
     else if (parts.type == T_BOOL)
       cout << "BOOLEAN";
 
-  cout << '\n' << endl;
+  cout << endl;
   }
   return;
 }
