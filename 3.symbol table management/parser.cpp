@@ -167,6 +167,12 @@ void Parser::ident(Lexer &lex, vector<string> &currentToken)
   printRule("N_IDENT", "T_IDENT");
   if (currentToken[0] == "T_IDENT")
   {
+    if(findEntryInAnyScope(currentToken[1]))
+    {
+      //already defined, bail out here
+      cout << "Line " << currentToken[2] <<": Multiply defined identifier" << endl;
+      exit(1);
+    }
     ident_tmp.push_back(currentToken[1]);
     currentToken = lex.getToken();
   }
@@ -260,7 +266,7 @@ void Parser::idxRange(Lexer &lex, vector<string> &currentToken)
 void Parser::simple(Lexer &lex, vector<string> &currentToken) 
 {
   //change this to return an ENUM of types?
-  
+
   //expanded it to catch each type
   if (currentToken[0] == "T_INT")
   {
