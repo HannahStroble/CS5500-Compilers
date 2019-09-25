@@ -38,7 +38,7 @@ void Parser::cleanUp()
     }
 }
 
-bool Parser::findEntryInAnyScope(const string the_name)
+bool Parser::findEntryInScope(const string the_name)
 {
     if (scopeStack.empty()) return(false);
     bool found = scopeStack.top().findEntry(the_name);
@@ -52,6 +52,22 @@ bool Parser::findEntryInAnyScope(const string the_name)
     //     scopeStack.push(symbolTable); // restore stack to original state
     //     return(found);
     // }
+}
+
+bool Parser::findEntryInAnyScope(const string the_name)
+{
+    if (scopeStack.empty()) return(false);
+    bool found = scopeStack.top().findEntry(the_name);
+    return found;
+    if (found)
+        return(true);
+     else {
+         SYMBOL_TABLE symbolTable = scopeStack.top();
+         scopeStack.pop();
+         found = findEntryInAnyScope(the_name);
+         scopeStack.push(symbolTable); // restore stack to original state
+         return(found);
+    }
 }
 
 void Parser::printAddition(const string item, const int item_type)
@@ -211,7 +227,7 @@ void Parser::varDec(Lexer &lex, vector<string> &currentToken)
     identType(lex, currentToken);
     for(auto& i : ident_tmp)
     {
-      bool inScope = findEntryInAnyScope(i);
+      bool inScope = findEntryInScope(i);
       if(isArray)
       {
         scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(i, array_temp));
@@ -393,7 +409,7 @@ void Parser::procHdr(Lexer &lex, vector<string> &currentToken)
     currentToken = lex.getToken();
     if (currentToken[0] == "T_IDENT")
     {
-      bool inScope = findEntryInAnyScope(currentToken[1]);
+      bool inScope = findEntryInScope(currentToken[1]);
       scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(currentToken[1], T_PROC));
       printAddition(currentToken[1], T_PROC);
       if(inScope)
@@ -449,34 +465,35 @@ void Parser::stmtLst(Lexer &lex, vector<string> &currentToken)
 void Parser::stmt(Lexer &lex, vector<string> &currentToken) 
 {
   if (currentToken[0] == "T_READ")
-    {
-      printRule("N_STMT", "N_READ");
-      readStmt(lex, currentToken);
-    }
+  {
+    printRule("N_STMT", "N_READ");
+    readStmt(lex, currentToken);
+  }
   else if (currentToken[0] == "T_WRITE")
-         {
-           printRule("N_STMT", "N_WRITE");
-           writeStmt(lex, currentToken);
-         }
+  {
+   printRule("N_STMT", "N_WRITE");
+   writeStmt(lex, currentToken);
+  }
   else if (currentToken[0] == "T_IF")
-         {
-           printRule("N_STMT", "N_CONDITION");
-           conditionStmt(lex, currentToken);
-         }
+  {
+   printRule("N_STMT", "N_CONDITION");
+   conditionStmt(lex, currentToken);
+  }
   else if (currentToken[0] == "T_WHILE")
-         {
-           printRule("N_STMT", "N_WHILE");
-           whileStmt(lex, currentToken);
-         }
+  {
+   printRule("N_STMT", "N_WHILE");
+   whileStmt(lex, currentToken);
+  }
   else if (currentToken[0] == "T_BEGIN")
-         {
-           printRule("N_STMT", "N_COMPOUND");
-           compoundStmt(lex, currentToken);
-         }
-  else {
-         printRule("N_STMT", "N_ASSIGN");
-         assignStmt(lex, currentToken);
-       }
+  {
+   printRule("N_STMT", "N_COMPOUND");
+   compoundStmt(lex, currentToken);
+  }
+  else 
+  {
+   printRule("N_STMT", "N_ASSIGN");
+   assignStmt(lex, currentToken);
+  }
 }
 
 void Parser::assignStmt(Lexer &lex, vector<string> &currentToken) {
@@ -785,6 +802,11 @@ void Parser::variable(Lexer &lex, vector<string> &currentToken)
   printRule("N_VARIABLE", "T_IDENT N_IDXVAR");
   if (currentToken[0] == "T_IDENT")
   {
+    if(findEntryInScope(currentToken[1]))
+    {
+        cout << "Line " << currentToken[2] <<": Undefined identifier"<<endl;
+        exit(1);
+    }
     currentToken = lex.getToken();
     idxVar(lex, currentToken);
   }

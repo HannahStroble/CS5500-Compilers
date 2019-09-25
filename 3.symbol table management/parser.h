@@ -96,6 +96,7 @@ class Parser {
     void endScope();
     void cleanUp();
     bool findEntryInAnyScope(const string the_name);
+    bool findEntryInScope(const string the_name);
     void printAddition(const string item, const int item_type);
     void printAddition(const string item, const array_parts parts);
     void printAddition(const string item, const string item_type);
