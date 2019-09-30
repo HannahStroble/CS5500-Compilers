@@ -1,0 +1,12 @@
+(* Cannot have entire array on rhs of assignment *)
+
+program p;
+
+var A : array [1..5] of integer;
+    x : integer;
+
+begin
+  x := A;
+  write('!')
+end.
+
