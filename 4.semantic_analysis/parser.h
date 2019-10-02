@@ -76,20 +76,20 @@ class Parser {
                         vector<string> &currentToken);
 	void elsePart(Lexer &lex, vector<string> &currentToken);
 	void whileStmt(Lexer &lex, vector<string> &currentToken);
-	void expr(Lexer &lex, vector<string> &currentToken);
-	void opExpr(Lexer &lex, vector<string> &currentToken);
-	void simpleExpr(Lexer &lex, vector<string> &currentToken);
-	void addOpLst(Lexer &lex, vector<string> &currentToken);
-	void term(Lexer &lex, vector<string> &currentToken);
-	void multOpLst(Lexer &lex, vector<string> &currentToken);
-	void factor(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO expr(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO opExpr(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO simpleExpr(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO addOpLst(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO term(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO multOpLst(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO factor(Lexer &lex, vector<string> &currentToken);
 	void sign(Lexer &lex, vector<string> &currentToken);
 	void addOp(Lexer &lex, vector<string> &currentToken);
 	void multOp(Lexer &lex, vector<string> &currentToken);
 	void relOp(Lexer &lex, vector<string> &currentToken);
 	void variable(Lexer &lex, vector<string> &currentToken);
 	void idxVar(Lexer &lex, vector<string> &currentToken);
-	void constant(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO constant(Lexer &lex, vector<string> &currentToken);
 	void boolConst(Lexer &lex, vector<string> &currentToken);
     
     void beginScope();
@@ -98,7 +98,7 @@ class Parser {
     bool findEntryInAnyScope(const string the_name);
     bool findEntryInScope(const string the_name);
     void printAddition(const string item, const int item_type);
-    void printAddition(const string item, const array_parts parts);
+    void printAddition(const string item, const TYPE_INFO parts);
     void printAddition(const string item, const string item_type);
 
 

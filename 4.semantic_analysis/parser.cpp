@@ -7,8 +7,8 @@ bool Parser::print_additions_flag = true;
 bool Parser::suppressTokenOutput = false;
 
 std::vector<string> ident_tmp;
-array_parts array_temp;
-int tmp_simple;
+TYPE_INFO array_temp;
+TYPE_INFO tmp_simple;
 bool isArray;
 bool blockINI = false;
 // Push a new SYMBOL_TABLE onto scopeStack.
@@ -32,7 +32,8 @@ void Parser::cleanUp()
 {
   if (scopeStack.empty())
     return;
-  else {
+  else 
+  {
     scopeStack.pop();
     cleanUp();
   }
@@ -41,8 +42,11 @@ void Parser::cleanUp()
 bool Parser::findEntryInScope(const string the_name)
 {
   if (scopeStack.empty()) return(false);
-  bool found = scopeStack.top().findEntry(the_name);
-  return found;
+  TYPE_INFO found = scopeStack.top().findEntry(the_name);
+  if(found.type == UNDEFINED)
+    return false;
+  else
+    return true;
     // if (found)
     //     return(true);
     // else {
@@ -56,41 +60,44 @@ bool Parser::findEntryInScope(const string the_name)
 
 bool Parser::findEntryInAnyScope(const string the_name)
 {
-  if (scopeStack.empty()) return(false);
-  bool found = scopeStack.top().findEntry(the_name);
-  if (found)
-    return(true);
-  else {
-   SYMBOL_TABLE symbolTable = scopeStack.top();
-   scopeStack.pop();
-   found = findEntryInAnyScope(the_name);
-         scopeStack.push(symbolTable); // restore stack to original state
-         return(found);
-       }
-     }
+  bool isFound;
+  if (scopeStack.empty()) 
+    return false;
+  TYPE_INFO found = scopeStack.top().findEntry(the_name);
+  if (found.type != UNDEFINED)
+    return true;
+  else 
+  {
+    SYMBOL_TABLE symbolTable = scopeStack.top();
+    scopeStack.pop();
+    isFound = findEntryInAnyScope(the_name);
+    scopeStack.push(symbolTable); // restore stack to original state
+    return isFound;
+  }
+}
 
-     void Parser::printAddition(const string item, const int item_type)
-     {
-      if (print_additions_flag)
-      {
-        cout << "\n+++ Adding " << item << " to symbol table with type ";
-        if(item_type == T_INT)
-          cout << "INTEGER";
-        else if (item_type == T_CHAR)
-          cout << "CHAR";
-        else if (item_type == T_BOOL)
-          cout << "BOOLEAN";
-        else if (item_type == T_PROG)
-          cout << "PROGRAM";
-        else if (item_type == T_PROC)
-          cout << "PROCEDURE";
+void Parser::printAddition(const string item, const int item_type)
+{
+  if (print_additions_flag)
+  {
+    cout << "\n+++ Adding " << item << " to symbol table with type ";
+    if(item_type == T_INT)
+      cout << "INTEGER";
+    else if (item_type == T_CHAR)
+      cout << "CHAR";
+    else if (item_type == T_BOOL)
+      cout << "BOOLEAN";
+    else if (item_type == T_PROG)
+      cout << "PROGRAM";
+    else if (item_type == T_PROC)
+      cout << "PROCEDURE";
 
-        cout << endl;
-      }
-      return;
-    }
+    cout << endl;
+  }
+  return;
+}
 
-    void Parser::printAddition(const string item, const array_parts parts)
+    void Parser::printAddition(const string item, const TYPE_INFO parts)
     {
       if (print_additions_flag)
       {
@@ -138,7 +145,9 @@ bool Parser::findEntryInAnyScope(const string the_name)
       progLbl(lex, currentToken);
       if (currentToken[0] == "T_IDENT") 
       {
-        scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(currentToken[1], T_PROG));
+        TYPE_INFO tmp;
+        tmp.type = T_PROG;
+        scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(currentToken[1], tmp));
         printAddition(currentToken[1], T_PROG);
 
         currentToken = lex.getToken();
@@ -214,41 +223,41 @@ bool Parser::findEntryInAnyScope(const string the_name)
       else printRule("N_VARDECLST", "epsilon");
     }
 
-    void Parser::varDec(Lexer &lex, vector<string> &currentToken) 
-    {
-      printRule("N_VARDEC", "N_IDENT N_IDENTLST T_COLON N_TYPE");
-      ident(lex, currentToken);
-      identLst(lex, currentToken);
-      if (currentToken[0] == "T_COLON")
-      {
-        currentToken = lex.getToken();
+void Parser::varDec(Lexer &lex, vector<string> &currentToken) 
+{
+  printRule("N_VARDEC", "N_IDENT N_IDENTLST T_COLON N_TYPE");
+  ident(lex, currentToken);
+  identLst(lex, currentToken);
+  if (currentToken[0] == "T_COLON")
+  {
+    currentToken = lex.getToken();
     //get types in here...
-        identType(lex, currentToken);
-        for(auto& i : ident_tmp)
-        {
-          bool inScope = findEntryInScope(i);
-          if(isArray)
-          {
-            scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(i, array_temp));
-            printAddition(i, array_temp);
-          }
-          else
-          {
-            scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(i, tmp_simple));
-            printAddition(i, tmp_simple);
-          }
-          if(inScope)
-          {
-        //already defined, bail out here
-            cout << "Line " << currentToken[2] <<": Multiply defined identifier   "<<endl;
-            exit(0);
-          }
-        }
+    identType(lex, currentToken);
+    for(auto& i : ident_tmp)
+    {
+      bool inScope = findEntryInScope(i);
+      if(array_temp.isArray)
+      {
+        scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(i, array_temp));
+        printAddition(i, array_temp);
       }
-  //clear the vector of stashed idents
-      else syntaxError(currentToken);
-      ident_tmp.clear();
+      else
+      {
+        scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(i, tmp_simple));
+        printAddition(i, tmp_simple);
+      }
+      if(inScope)
+      {
+        //already defined, bail out here
+        cout << "Line " << currentToken[2] <<": Multiply defined identifier   "<<endl;
+        exit(0);
+      }
     }
+  }
+  //clear the vector of stashed idents
+  else syntaxError(currentToken);
+  ident_tmp.clear();
+}
 
     void Parser::ident(Lexer &lex, vector<string> &currentToken) 
     {
@@ -280,14 +289,14 @@ bool Parser::findEntryInAnyScope(const string the_name)
         printRule("N_TYPE", "N_ARRAY");
     //array time!
         array(lex, currentToken);
-        isArray = true;
+        array_temp.isArray = true;
       }
       else 
       {
         printRule("N_TYPE", "N_SIMPLE");
     //simple type
-        tmp_simple = simple(lex, currentToken);
-        isArray = false;
+        tmp_simple.type = simple(lex, currentToken);
+        array_temp.isArray = false;
       }
     }
 
@@ -408,8 +417,10 @@ bool Parser::findEntryInAnyScope(const string the_name)
         currentToken = lex.getToken();
         if (currentToken[0] == "T_IDENT")
         {
+          TYPE_INFO tmp;
+          tmp.type = T_PROC;
           bool inScope = findEntryInScope(currentToken[1]);
-          scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(currentToken[1], T_PROC));
+          scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(currentToken[1], tmp));
           printAddition(currentToken[1], T_PROC);
           if(inScope)
           {
@@ -653,7 +664,7 @@ bool Parser::findEntryInAnyScope(const string the_name)
     if(tmp_info2.type != NOT_APPLICABLE)
     {   
       //we don't care about the actual type of either at this point
-      tmp_info1.type = BOOL;
+      tmp_info1.type = T_BOOL;
       return tmp_info1;
     }
     else
@@ -714,7 +725,7 @@ bool Parser::findEntryInAnyScope(const string the_name)
     return tmp_info;
   }
 
-  void Parser::term(Lexer &lex, vector<string> &currentToken) 
+  TYPE_INFO Parser::term(Lexer &lex, vector<string> &currentToken) 
   {
     TYPE_INFO tmp_info;
     printRule("N_TERM", "N_FACTOR N_MULTOPLST");
@@ -723,7 +734,7 @@ bool Parser::findEntryInAnyScope(const string the_name)
     return tmp_info;
   }
 
-  void Parser::multOpLst(Lexer &lex, vector<string> &currentToken) 
+  TYPE_INFO Parser::multOpLst(Lexer &lex, vector<string> &currentToken) 
   {
     TYPE_INFO tmp_info;
     if ((currentToken[0] == "T_MULT") || 
@@ -743,7 +754,7 @@ bool Parser::findEntryInAnyScope(const string the_name)
     return tmp_info;
   }
 
-  void Parser::factor(Lexer &lex, vector<string> &currentToken) 
+  TYPE_INFO Parser::factor(Lexer &lex, vector<string> &currentToken) 
   {
     TYPE_INFO tmp_info;
     if (currentToken[0] == "T_LPAREN")
@@ -762,7 +773,7 @@ bool Parser::findEntryInAnyScope(const string the_name)
         printRule("N_FACTOR", "T_NOT N_FACTOR");
         currentToken = lex.getToken();
         factor(lex, currentToken);
-        tmp_info.type = BOOL;
+        tmp_info.type = T_BOOL;
       }
       else
       {
@@ -835,7 +846,7 @@ bool Parser::findEntryInAnyScope(const string the_name)
     else syntaxError(currentToken);
   }
 
-  void Parser::variable(Lexer &lex, vector<string> &currentToken) 
+  TYPE_INFO Parser::variable(Lexer &lex, vector<string> &currentToken) 
   {
     printRule("N_VARIABLE", "T_IDENT N_IDXVAR");
     if (currentToken[0] == "T_IDENT")
@@ -865,21 +876,30 @@ bool Parser::findEntryInAnyScope(const string the_name)
     else printRule("N_IDXVAR", "epsilon");
   }
 
-  void Parser::constant(Lexer &lex, vector<string> &currentToken) 
+  TYPE_INFO Parser::constant(Lexer &lex, vector<string> &currentToken) 
   {
+    TYPE_INFO tmp_info;
     if ((currentToken[0] == "T_TRUE") ||
       (currentToken[0] == "T_FALSE"))
     {
+      tmp_info.type = T_BOOL;
       printRule("N_CONST", "N_BOOLCONST");
       boolConst(lex, currentToken);
     }
-    else if ((currentToken[0] == "T_INTCONST") ||
-     (currentToken[0] == "T_CHARCONST"))
+    else if ((currentToken[0] == "T_INTCONST")
     {
-     printRule("N_CONST", currentToken[0]);
-     currentToken = lex.getToken();
+      tmp_info.type = T_INT;
+      printRule("N_CONST", currentToken[0]);
+      currentToken = lex.getToken();
+    }  
+    else if (currentToken[0] == "T_CHARCONST"))
+    {
+      tmp_info.type = T_CHAR;
+      printRule("N_CONST", currentToken[0]);
+      currentToken = lex.getToken();
    }
    else syntaxError(currentToken);
+   return tmp_info;
  }
 
  void Parser::boolConst(Lexer &lex, vector<string> &currentToken) {

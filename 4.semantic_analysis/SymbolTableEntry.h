@@ -96,13 +96,13 @@ public:
   SYMBOL_TABLE_ENTRY(const string theName, const TYPE_INFO theType)
   {
     name = theName;
-    parts.start = theType.start;
-    parts.end = theType.end;
-    parts.type = theType.type;
-    parts.numParams = theType.numParams;
-    parts.returnType = theType.returnType;
-    parts.isParam = theType.isParam;
-    parts.isArray = theType.isArray ;
+    // parts.start = theType.start;
+    // parts.end = theType.end;
+    // parts.type = theType.type;
+    // parts.numParams = theType.numParams;
+    // parts.returnType = theType.returnType;
+    // parts.isParam = theType.isParam;
+    parts = theType ;
   }
 
 
