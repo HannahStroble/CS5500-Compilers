@@ -684,12 +684,14 @@ bool Parser::findEntryInAnyScope(const string the_name)
     return tmp_info;
   }
 
-  void Parser::simpleExpr(Lexer &lex, 
+  TYPE_INFO Parser::simpleExpr(Lexer &lex, 
     vector<string> &currentToken) 
   {
+    TYPE_INFO tmp_info;
     printRule("N_SIMPLEEXPR", "N_TERM N_ADDOPLST");
-    term(lex, currentToken);
+    tmp_info = term(lex, currentToken);
     addOpLst(lex, currentToken);
+    return tmp_info;
   }
 
   TYPE_INFO Parser::addOpLst(Lexer &lex, vector<string> &currentToken) 
@@ -701,7 +703,7 @@ bool Parser::findEntryInAnyScope(const string the_name)
     {
       printRule("N_ADDOPLST", "N_ADDOP N_TERM N_ADDOPLST");
       addOp(lex, currentToken);
-      tmp_info term(lex, currentToken);
+      tmp_info = term(lex, currentToken);
       addOpLst(lex, currentToken);
     } 
     else 
@@ -714,31 +716,41 @@ bool Parser::findEntryInAnyScope(const string the_name)
 
   void Parser::term(Lexer &lex, vector<string> &currentToken) 
   {
+    TYPE_INFO tmp_info;
     printRule("N_TERM", "N_FACTOR N_MULTOPLST");
-    factor(lex, currentToken);
+    tmp_info = factor(lex, currentToken);
     multOpLst(lex, currentToken);
+    return tmp_info;
   }
 
-  void Parser::multOpLst(Lexer &lex, vector<string> &currentToken) {
+  void Parser::multOpLst(Lexer &lex, vector<string> &currentToken) 
+  {
+    TYPE_INFO tmp_info;
     if ((currentToken[0] == "T_MULT") || 
       (currentToken[0] == "T_DIV") || 
       (currentToken[0] == "T_AND")) 
     {
       printRule("N_MULTOPLST", "N_MULTOP N_FACTOR N_MULTOPLST");
       multOp(lex, currentToken);
-      factor(lex, currentToken);
+      tmp_info = factor(lex, currentToken);
       multOpLst(lex, currentToken);
     }
-    else printRule("N_MULTOPLST", "epsilon");
+    else 
+    {
+      tmp_info.type = NOT_APPLICABLE;
+      printRule("N_MULTOPLST", "epsilon");
+    }
+    return tmp_info;
   }
 
   void Parser::factor(Lexer &lex, vector<string> &currentToken) 
   {
+    TYPE_INFO tmp_info;
     if (currentToken[0] == "T_LPAREN")
     {
       printRule("N_FACTOR", "T_LPAREN N_EXPR T_RPAREN");
       currentToken = lex.getToken();
-      expr(lex, currentToken);
+      tmp_info = expr(lex, currentToken);
       if (currentToken[0] == "T_RPAREN")
         currentToken = lex.getToken();
       else syntaxError(currentToken);
@@ -750,6 +762,7 @@ bool Parser::findEntryInAnyScope(const string the_name)
         printRule("N_FACTOR", "T_NOT N_FACTOR");
         currentToken = lex.getToken();
         factor(lex, currentToken);
+        tmp_info.type = BOOL;
       }
       else
       {
@@ -759,16 +772,17 @@ bool Parser::findEntryInAnyScope(const string the_name)
           (currentToken[0] == "T_FALSE"))
         {
           printRule("N_FACTOR", "N_CONST");
-          constant(lex, currentToken);
+          tmp_info = constant(lex, currentToken);
         }
         else
         {
           printRule("N_FACTOR", "N_SIGN N_VARIABLE");
           sign(lex, currentToken);
-          variable(lex, currentToken);
+          tmp_info = variable(lex, currentToken);
         }
       }
     }
+    return tmp_info;
   }
 
   void Parser::sign(Lexer &lex, vector<string> &currentToken) 
