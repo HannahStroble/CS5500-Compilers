@@ -66,6 +66,7 @@ struct TYPE_INFO
   int numParams;    // number of parameters of function type
   int returnType;   // return type if a function type
   bool isParam;     // true if ident is a function param
+  bool isArray;
 };
 
 // Class that builds the element object for the IDENT
@@ -74,7 +75,6 @@ class SYMBOL_TABLE_ENTRY
 private:
   // Member variables
   string name;
-  bool isArray;
   TYPE_INFO parts;
 
 
@@ -93,7 +93,7 @@ public:
   }
 
   // Create customized symbol table
-  SYMBOL_TABLE_ENTRY(const string theName, const bool arrayFlag, const TYPE_INFO theType)
+  SYMBOL_TABLE_ENTRY(const string theName, const TYPE_INFO theType)
   {
     name = theName;
     parts.start = theType.start;
@@ -102,13 +102,12 @@ public:
     parts.numParams = theType.numParams;
     parts.returnType = theType.returnType;
     parts.isParam = theType.isParam;
-    isArray = arrayFlag;
+    parts.isArray = theType.isArray ;
   }
 
 
   // Accessors
   string getName() const { return name; }
-  bool getArray() const { return isArray; }
   TYPE_INFO getTypeParts() const { return parts; }
 };
 
