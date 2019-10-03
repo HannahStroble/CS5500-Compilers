@@ -2,9 +2,9 @@
 #include "SymbolTable.h"
 
 // Static Parser variable
-bool Parser::print_productions_flag = false; 
-bool Parser::print_additions_flag = true; 
-bool Parser::suppressTokenOutput = false;
+bool Parser::print_productions_flag = true; 
+bool Parser::print_additions_flag = false; 
+bool Parser::suppressTokenOutput = true;
 
 std::vector<string> ident_tmp;
 TYPE_INFO array_temp;
@@ -725,7 +725,9 @@ void Parser::whileStmt(Lexer &lex, vector<string> &currentToken)
     TYPE_INFO tmp_info1, tmp_info2;
     printRule("N_EXPR", "N_SIMPLEEXPR N_OPEXPR");
     tmp_info1 = simpleExpr(lex, currentToken);
+    cout << "TYPE: " << tmp_info1.type << endl;
     tmp_info2 = opExpr(lex, currentToken);
+    cout << "TYPE: " << tmp_info2.type << endl;
     if(tmp_info2.type != NOT_APPLICABLE)
     {   
       //we don't care about the actual type of either at this point
@@ -735,6 +737,7 @@ void Parser::whileStmt(Lexer &lex, vector<string> &currentToken)
     else if (tmp_info1.type != tmp_info2.type)
     {
       cout << "Line: " << currentToken[2] << ": Expressions must both be int, or both char, or both boolean" << endl;
+      exit(0);
     }
     else
     {
@@ -746,10 +749,10 @@ TYPE_INFO Parser::opExpr(Lexer &lex, vector<string> &currentToken)
 {
   TYPE_INFO tmp_info;
   if ((currentToken[0] == "T_LT") || 
-    (currentToken[0] == "T_LE") || 
-    (currentToken[0] == "T_NE") || 
-    (currentToken[0] == "T_EQ") || 
-    (currentToken[0] == "T_GT") || 
+    (currentToken[0] == "T_LE")   || 
+    (currentToken[0] == "T_NE")   || 
+    (currentToken[0] == "T_EQ")   || 
+    (currentToken[0] == "T_GT")   || 
     (currentToken[0] == "T_GE"))
   { 
     printRule("N_OPEXPR", "N_RELOP N_SIMPLEEXPR");
@@ -989,7 +992,8 @@ TYPE_INFO Parser::factor(Lexer &lex, vector<string> &currentToken)
       currentToken = lex.getToken();
       isIndexed = idxVar(lex, currentToken);
       tmp_info = findInfoInAnyScope(currentToken[1]);
-      if(tmp_info.isArray != isIndexed)
+      cout << "variableType" << tmp_info.type << endl;
+      if(!tmp_info.isArray && isIndexed)
       {
         cout << "Line " << currentToken[2] << ": Indexed variable must be of array type" << endl;
         exit(0);
