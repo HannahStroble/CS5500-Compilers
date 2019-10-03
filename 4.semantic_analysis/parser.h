@@ -83,12 +83,12 @@ class Parser {
 	TYPE_INFO term(Lexer &lex, vector<string> &currentToken);
 	TYPE_INFO multOpLst(Lexer &lex, vector<string> &currentToken);
 	TYPE_INFO factor(Lexer &lex, vector<string> &currentToken);
-	void sign(Lexer &lex, vector<string> &currentToken);
-	void addOp(Lexer &lex, vector<string> &currentToken);
-	void multOp(Lexer &lex, vector<string> &currentToken);
+	bool sign(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO addOp(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO multOp(Lexer &lex, vector<string> &currentToken);
 	void relOp(Lexer &lex, vector<string> &currentToken);
-	void variable(Lexer &lex, vector<string> &currentToken);
-	void idxVar(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO variable(Lexer &lex, vector<string> &currentToken);
+	bool idxVar(Lexer &lex, vector<string> &currentToken);
 	TYPE_INFO constant(Lexer &lex, vector<string> &currentToken);
 	void boolConst(Lexer &lex, vector<string> &currentToken);
     
