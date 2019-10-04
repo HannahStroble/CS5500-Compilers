@@ -6,13 +6,12 @@ using namespace std;
 
 #define UNDEFINED  			-1   // Type codes
 #define PROCEDURE			0
-#define INT				1
+#define INT				    1
 #define CHAR				2
 #define BOOL				4
 #define ARRAY				8
 #define INDEX_RANGE			9
 #define PROGRAM				10
-
 #define NOT_APPLICABLE 		-1
 
 typedef struct 
