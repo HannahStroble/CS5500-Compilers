@@ -1,23 +1,25 @@
 /*
-  MIPL lexical analyzer
-  Written by Dalton Cole (drcgy5@umsystem.edu) August 2019
+  MIPL Compiler Fall 2019
+
+  Lexical analyzer written by Dalton Cole (drcgy5@mst.edu) 
+  Everything else written by Jennifer Leopold (leopoldj@mst.edu)
 
   To compile: g++ -std=c++11 *.cpp -o driver.exe
-              or
+              or (if you have the makefile)
               make
   To execute: driver.exe input.txt
               where input.txt is some MIPL input file
 */
 
-#include "lexer.h"
-#include "parser.h"
-#include "SymbolTable.h"
 #include <fstream>
 #include <sstream>
-
+#include <iostream>
+#include "lexer.h"
+#include "parser.h"
 using namespace std;
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv) 
+{
   Lexer lex;
   vector<string> input;
   string tmp;
@@ -53,16 +55,15 @@ int main(int argc, char** argv) {
   // giving it the 1st token
   vector<string> currentToken = lex.getToken();
   Parser parser;
-
-  // start global scope
   parser.prog(lex, currentToken);
 
   // At the end of parsing, currentToken should be the
   // end-of-file token (i.e., "")
   if (currentToken[0] != "")
-    cout << "Syntax error: unexpected chars at end"
+    cout << "\nSyntax error: unexpected chars at end"
             " of program!\n";
   else cout << "\n---- Completed parsing ----\n";
+
 
   fin.close();
 

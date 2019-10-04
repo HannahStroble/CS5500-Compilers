@@ -7,28 +7,32 @@
 #define PARSER_H
 
 #include <iostream>
-#include "lexer.h"
 #include <iomanip>
+#include <stack>
+#include <list>
 #include <string>
-#include "SymbolTable.h"
-
+#include <stdlib.h>
+#include "lexer.h"
+#include "symbolTable.h"
 using namespace std;
 
-#define T_INT  1
-#define T_BOOL 2
-#define T_CHAR 3
-#define T_PROG 4
-#define T_PROC 5
+// Error messages (besides "Syntax error")
+const string MULTIPLY_DEFINED = "Multiply defined identifier";
+const string UNDEFINED_IDENT = "Undefined identifier";
 
-
-
-class Parser {
-	public:
+class Parser 
+{
+  public:
 	Parser() { };
 
 	/// Output "syntax error" with line # of currentToken
+	/// and exit
 	void syntaxError(const vector<string> currentToken) 
-     const; 
+       const; 
+	/// Output msg with line # of currentToken and exit
+	void printError(const vector<string> currentToken,
+                     const string msg) const; 
+
 
 	/// Output lhs and rhs of a production
 	void printRule(const string lhs, const string rhs);
@@ -51,11 +55,13 @@ class Parser {
 	void varDec(Lexer &lex, vector<string> &currentToken);
 	void ident(Lexer &lex, vector<string> &currentToken);
 	void identLst(Lexer &lex, vector<string> &currentToken);
-	void identType(Lexer &lex, vector<string> &currentToken);
-	void array(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO identType(Lexer &lex, 
+                         vector<string> &currentToken);
+	TYPE_INFO array(Lexer &lex, vector<string> &currentToken);
 	int idx(Lexer &lex, vector<string> &currentToken);
-	void idxRange(Lexer &lex, vector<string> &currentToken);
-	int simple(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO idxRange(Lexer &lex, 
+                        vector<string> &currentToken);
+	TYPE_INFO simple(Lexer &lex, vector<string> &currentToken);
 	void procDecPart(Lexer &lex, vector<string> &currentToken);
 	void procDec(Lexer &lex, vector<string> &currentToken);
 	void procHdr(Lexer &lex, vector<string> &currentToken);
@@ -76,38 +82,46 @@ class Parser {
                         vector<string> &currentToken);
 	void elsePart(Lexer &lex, vector<string> &currentToken);
 	void whileStmt(Lexer &lex, vector<string> &currentToken);
-	TYPE_INFO expr(Lexer &lex, vector<string> &currentToken);
-	TYPE_INFO opExpr(Lexer &lex, vector<string> &currentToken);
-	TYPE_INFO simpleExpr(Lexer &lex, vector<string> &currentToken);
-	TYPE_INFO addOpLst(Lexer &lex, vector<string> &currentToken);
-	TYPE_INFO term(Lexer &lex, vector<string> &currentToken);
-	TYPE_INFO multOpLst(Lexer &lex, vector<string> &currentToken);
-	TYPE_INFO factor(Lexer &lex, vector<string> &currentToken);
-	bool sign(Lexer &lex, vector<string> &currentToken);
-	TYPE_INFO addOp(Lexer &lex, vector<string> &currentToken);
-	TYPE_INFO multOp(Lexer &lex, vector<string> &currentToken);
+	void expr(Lexer &lex, vector<string> &currentToken);
+	void opExpr(Lexer &lex, vector<string> &currentToken);
+	void simpleExpr(Lexer &lex, vector<string> &currentToken);
+	void addOpLst(Lexer &lex, vector<string> &currentToken);
+	void term(Lexer &lex, vector<string> &currentToken);
+	void multOpLst(Lexer &lex, vector<string> &currentToken);
+	void factor(Lexer &lex, vector<string> &currentToken);
+	void sign(Lexer &lex, vector<string> &currentToken);
+	void addOp(Lexer &lex, vector<string> &currentToken);
+	void multOp(Lexer &lex, vector<string> &currentToken);
 	void relOp(Lexer &lex, vector<string> &currentToken);
-	TYPE_INFO variable(Lexer &lex, vector<string> &currentToken);
-	bool idxVar(Lexer &lex, vector<string> &currentToken);
-	TYPE_INFO constant(Lexer &lex, vector<string> &currentToken);
+	void variable(Lexer &lex, vector<string> &currentToken);
+	void idxVar(Lexer &lex, vector<string> &currentToken);
+	void constant(Lexer &lex, vector<string> &currentToken);
 	void boolConst(Lexer &lex, vector<string> &currentToken);
-    
-    void beginScope();
-    void endScope();
-    void cleanUp();
-    bool findEntryInAnyScope(const string the_name);
-    TYPE_INFO findInfoInAnyScope(const string the_name);
-    bool findEntryInScope(const string the_name);
-    void printAddition(const string item, const int item_type);
-    void printAddition(const string item, const TYPE_INFO parts);
-    void printAddition(const string item, const string item_type);
+
+
+	/// Symbol table mgt calls
+
+	void prSymbolTableAddition(const string identName, 
+                           const TYPE_INFO typeInfo);
+	void beginScope();
+	void endScope();
+	void cleanUp();
+	TYPE_INFO findEntryInAnyScope(const string theName);
+
+	stack<SYMBOL_TABLE> scopeStack;    // stack of scope
+                                        // hashtables
+	list<string> variableNames;		  // list of declared 
+                                        // variables
+
+
+
 
 
 	static bool print_productions_flag; 
-    static bool print_additions_flag;
 	///< Print productions while parsing
-    static bool suppressTokenOutput;
-    stack<SYMBOL_TABLE> scopeStack; // stack of scope hashtables
+
+	static bool print_symbolTableMgt_flag; 
+	///< Print symbol table mgt messages while parsing
 
 
 };

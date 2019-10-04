@@ -3,10 +3,10 @@
 
 #include <map>
 #include <string>
-#include "SymbolTableEntry.h"
+#include "symbolTableEntry.h"
 using namespace std;
 
-class SYMBOL_TABLE
+class SYMBOL_TABLE 
 {
 private:
   std::map<string, SYMBOL_TABLE_ENTRY> hashTable;
@@ -17,56 +17,29 @@ public:
 
   // Add SYMBOL_TABLE_ENTRY x to this symbol table.
   // If successful, return true; otherwise, return false.
-  bool addEntry(SYMBOL_TABLE_ENTRY x)
+  bool addEntry(SYMBOL_TABLE_ENTRY x) 
   {
-    // Make sure there isn't already an entry with the same name
+    // Make sure there isn't already an entry with same name
     map<string, SYMBOL_TABLE_ENTRY>::iterator itr;
-    if ((itr = hashTable.find(x.getName())) == hashTable.end())
+    if ((itr = hashTable.find(x.getName())) == hashTable.end()) 
     {
       hashTable.insert(make_pair(x.getName(), x));
-      return(true);
-    }
-    else return(false);
-  }
-  
-  // Change entry in the symbol table
-  bool changeEntry(SYMBOL_TABLE_ENTRY x)
-  {
-    // Make sure the entry we want to change in the symbol table 
-    // is actually in the symbol table.
-    map<string, SYMBOL_TABLE_ENTRY>::iterator itr;
-    if ((itr = hashTable.find(x.getName())) != hashTable.end())
-    {
-      hashTable.erase(itr);
-      hashTable.insert(make_pair(x.getName(), x));
-      return true;
+	return(true);
     }
     else return(false);
   }
 
-  // If a SYMBOL_TABLE_ENTRY with name theName is
-  // found in this symbol table, then return true;
-  // otherwise, return false.
-  TYPE_INFO findEntry(string theName)
+  // If a symbol table entry with name theName is
+  // found in this symbol table, then return its token type
+  // info; otherwise, return token info with type UNDEFINED.
+  TYPE_INFO findEntry(string theName) 
   {
-    TYPE_INFO info;
-    info.start = UNDEFINED;
-    info.end = UNDEFINED;
-    info.type = UNDEFINED;      
-    info.numParams = UNDEFINED; 
-    info.returnType = UNDEFINED;
-    info.isParam = UNDEFINED;  
-    info.isArray = UNDEFINED;
+    TYPE_INFO info = {UNDEFINED, NOT_APPLICABLE, NOT_APPLICABLE,
+                      NOT_APPLICABLE};
     map<string, SYMBOL_TABLE_ENTRY>::iterator itr;
     if ((itr = hashTable.find(theName)) == hashTable.end())
       return(info);
-    else return(itr->second.getTypeParts());
-  }
-  
-  // Return # entries in the symbol table
-  int getNumEntries()
-  {
-    return(hashTable.size());
+    else return(itr->second.getTypeInfo());
   }
 
 };

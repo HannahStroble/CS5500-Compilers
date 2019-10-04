@@ -1,141 +1,8 @@
 #include "parser.h"
-#include "SymbolTable.h"
 
-// Static Parser variable
-bool Parser::print_productions_flag = false; 
-bool Parser::print_additions_flag = false; 
-bool Parser::suppressTokenOutput = true;
-
-std::vector<string> ident_tmp;
-TYPE_INFO array_temp;
-TYPE_INFO tmp_simple;
-bool isArray;
-bool blockINI = false;
-// Push a new SYMBOL_TABLE onto scopeStack.
-void Parser::beginScope()
-{
-  scopeStack.push(SYMBOL_TABLE());
-  if(!suppressTokenOutput)
-    printf("\n\n>>> Entering new scope...\n");
-}
-
-// Pop a SYMBOL_TABLE from scopeStack.
-void Parser::endScope() 
-{
-  scopeStack.pop();
-  if(!suppressTokenOutput)
-    printf("\n<<< Exiting scope...\n");
-}
-
-// Pop all SYMBOL_TABLE's from scopeStack.
-void Parser::cleanUp() 
-{
-  if (scopeStack.empty())
-    return;
-  else 
-  {
-    scopeStack.pop();
-    cleanUp();
-  }
-}
-
-bool Parser::findEntryInScope(const string the_name)
-{
-  if (scopeStack.empty()) 
-    return(false);
-  TYPE_INFO found = scopeStack.top().findEntry(the_name);
-  if(found.type == UNDEFINED)
-    return false;
-  else
-    return true;
-}
-
-bool Parser::findEntryInAnyScope(const string the_name)
-{
-  bool isFound;
-  if (scopeStack.empty()) 
-    return false;
-  TYPE_INFO found = scopeStack.top().findEntry(the_name);
-  if (found.type != UNDEFINED)
-    return true;
-  else 
-  {
-    SYMBOL_TABLE symbolTable = scopeStack.top();
-    scopeStack.pop();
-    isFound = findEntryInAnyScope(the_name);
-    scopeStack.push(symbolTable); // restore stack to original state
-    return isFound;
-  }
-}
-
-TYPE_INFO Parser::findInfoInAnyScope(const string the_name)
-{
-  TYPE_INFO tmp_info;
-  tmp_info.start = UNDEFINED;
-  tmp_info.end = UNDEFINED;
-  tmp_info.type = UNDEFINED;      
-  tmp_info.numParams = UNDEFINED; 
-  tmp_info.returnType = UNDEFINED;
-  tmp_info.isParam = UNDEFINED;  
-  tmp_info.isArray = UNDEFINED;
-  if (scopeStack.empty()) 
-    return tmp_info;
-  tmp_info = scopeStack.top().findEntry(the_name);
-  if (tmp_info.type != UNDEFINED)
-    return tmp_info;
-  else 
-  {
-    SYMBOL_TABLE symbolTable = scopeStack.top();
-    scopeStack.pop();
-    tmp_info = findInfoInAnyScope(the_name);
-    scopeStack.push(symbolTable); // restore stack to original state
-    return tmp_info;
-  }
-}
-
-void Parser::printAddition(const string item, const int item_type)
-{
-  if (print_additions_flag)
-  {
-    cout << "\n+++ Adding " << item << " to symbol table with type ";
-    if(item_type == T_INT)
-      cout << "INTEGER";
-    else if (item_type == T_CHAR)
-      cout << "CHAR";
-    else if (item_type == T_BOOL)
-      cout << "BOOLEAN";
-    else if (item_type == T_PROG)
-      cout << "PROGRAM";
-    else if (item_type == T_PROC)
-      cout << "PROCEDURE";
-
-    cout << endl;
-  }
-  return;
-}
-
-void Parser::printAddition(const string item, const TYPE_INFO parts)
-{
-  if (print_additions_flag)
-  {
-    cout << "\n+++ Adding " << item << " to symbol table with type ARRAY " << parts.start << " .. " << parts.end << " OF ";
-    if(parts.type == T_INT)
-      cout << "INTEGER";
-    else if (parts.type == T_CHAR)
-      cout << "CHAR";
-    else if (parts.type == T_BOOL)
-      cout << "BOOLEAN";
-    cout << endl;
-  }
-  return;
-}
-
-void Parser::printAddition(const string item, const string item_type)
-{
-  if (print_additions_flag)
-      cout << "\n +++ Adding " << item << " to symbol table with type " << item_type << "\n" << endl; 
-  return;
-}
+// Static Parser variables
+bool Parser::print_productions_flag = false;
+bool Parser::print_symbolTableMgt_flag = true;
 
 
 void Parser::printRule(const string lhs, const string rhs)
@@ -147,22 +14,30 @@ void Parser::printRule(const string lhs, const string rhs)
 
 void Parser::syntaxError(const vector<string> currentToken) const 
 {
-  cout << "Line " << currentToken[2] << ": syntax error\n";  
-  exit(0);
+  printError(currentToken, "syntax error");  
+}
+
+void Parser::printError(const vector<string> currentToken,
+                        const string msg) const 
+{
+  cout << "Line " << currentToken[2]
+       << ": " << msg << endl;
+  exit(1);
 }
 
 
 void Parser::prog(Lexer &lex, vector<string> &currentToken) 
 {
-  beginScope();
-  printRule("N_PROG", "N_PROGLBL T_IDENT T_SCOLON N_BLOCK T_DOT"); 
+  printRule("N_PROG", 
+            "N_PROGLBL T_IDENT T_SCOLON N_BLOCK T_DOT"); 
   progLbl(lex, currentToken);
   if (currentToken[0] == "T_IDENT") 
   {
-    TYPE_INFO tmp;
-    tmp.type = T_PROG;
-    scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(currentToken[1], tmp));
-    printAddition(currentToken[1], T_PROG);
+    TYPE_INFO info = {PROGRAM, NOT_APPLICABLE,
+                      NOT_APPLICABLE, NOT_APPLICABLE};
+    prSymbolTableAddition(currentToken[1], info);
+    scopeStack.top().addEntry
+     (SYMBOL_TABLE_ENTRY(currentToken[1],info));
     currentToken = lex.getToken();
     if (currentToken[0] == "T_SCOLON")
     {
@@ -183,30 +58,24 @@ void Parser::progLbl(Lexer &lex, vector<string> &currentToken)
   if (currentToken[0] == "T_PROG")
     currentToken = lex.getToken();
   else syntaxError(currentToken);
+  beginScope();
 }
-
+ 
 void Parser::block(Lexer &lex, vector<string> &currentToken) 
 {
-  if(!blockINI)
-  {
-    blockINI = true;
-  }  
-  else
-  {
-    beginScope();
-  }
-  printRule("N_BLOCK", "N_VARDECPART N_PROCDECPART N_STMTPART");
+  printRule("N_BLOCK", 
+            "N_VARDECPART N_PROCDECPART N_STMTPART");
   varDecPart(lex, currentToken);
   procDecPart(lex, currentToken);
   stmtPart(lex, currentToken);
   endScope();
 }
-
-void Parser::varDecPart(Lexer &lex, vector<string> &currentToken) 
-{
+ 
+void Parser::varDecPart(Lexer &lex, vector<string> &currentToken) {
   if (currentToken[0] == "T_VAR") 
   {
-    printRule("N_VARDECPART", "T_VAR N_VARDEC T_SCOLON N_VARDECLST");
+    printRule("N_VARDECPART",
+              "T_VAR N_VARDEC T_SCOLON N_VARDECLST");
     currentToken = lex.getToken();
     varDec(lex, currentToken);
     if (currentToken[0] == "T_SCOLON")
@@ -238,37 +107,29 @@ void Parser::varDecLst(Lexer &lex, vector<string> &currentToken)
 void Parser::varDec(Lexer &lex, vector<string> &currentToken) 
 {
   printRule("N_VARDEC", "N_IDENT N_IDENTLST T_COLON N_TYPE");
+  // ident and identLst put identifers on variableNames list
   ident(lex, currentToken);
   identLst(lex, currentToken);
   if (currentToken[0] == "T_COLON")
   {
     currentToken = lex.getToken();
-    //get types in here...
-    identType(lex, currentToken);
-    for(auto& i : ident_tmp)
+    TYPE_INFO info = identType(lex, currentToken);
+    // Add to symbol table each identifier that is on
+    // variableNames list, assigning it type info
+    for (std::list<string>::iterator
+         it = variableNames.begin();
+         it != variableNames.end(); it++) 
     {
-      bool inScope = findEntryInScope(i);
-      if(array_temp.isArray)
-      {
-        scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(i, array_temp));
-        printAddition(i, array_temp);
-      }
-      else
-      {
-        scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(i, tmp_simple));
-        printAddition(i, tmp_simple);
-      }
-      if(inScope)
-      {
-        //already defined, bail out here
-        cout << "Line " << currentToken[2] <<": Multiply defined identifier   "<<endl;
-        exit(0);
-      }
+      string varName = string(*it);
+      prSymbolTableAddition(varName, info);
+      bool success = scopeStack.top().addEntry
+       (SYMBOL_TABLE_ENTRY(varName, info));
+      if (!success)
+        printError(currentToken, MULTIPLY_DEFINED);
     }
   }
-  //clear the vector of stashed idents
   else syntaxError(currentToken);
-  ident_tmp.clear();
+  variableNames.clear();
 }
 
 void Parser::ident(Lexer &lex, vector<string> &currentToken) 
@@ -276,7 +137,9 @@ void Parser::ident(Lexer &lex, vector<string> &currentToken)
   printRule("N_IDENT", "T_IDENT");
   if (currentToken[0] == "T_IDENT")
   {
-    ident_tmp.push_back(currentToken[1]);
+    // Add it to variableNames list necessary in case
+    // ident called from varDec
+    variableNames.push_back(currentToken[1]);
     currentToken = lex.getToken();
   }
   else syntaxError(currentToken);
@@ -294,41 +157,51 @@ void Parser::identLst(Lexer &lex, vector<string> &currentToken)
   else printRule("N_IDENTLST", "epsilon");
 }
 
-void Parser::identType(Lexer &lex, vector<string> &currentToken)
+TYPE_INFO Parser::identType(Lexer &lex, 
+                            vector<string> &currentToken)
 {
+  TYPE_INFO info;
+
   if (currentToken[0] == "T_ARRAY")
   {
     printRule("N_TYPE", "N_ARRAY");
-    //array time!
-    array(lex, currentToken);
-    array_temp.isArray = true;
+    info = array(lex, currentToken);
   }
   else 
   {
     printRule("N_TYPE", "N_SIMPLE");
-    //simple type
-    tmp_simple.type = simple(lex, currentToken);
-    array_temp.isArray = false;
+    info = simple(lex, currentToken);
   }
+  return(info);
 }
 
-void Parser::array(Lexer &lex, vector<string> &currentToken) 
+TYPE_INFO Parser::array(Lexer &lex, 
+                        vector<string> &currentToken) 
 {
-  printRule("N_ARRAY","T_ARRAY T_LBRACK N_IDXRANGE T_RBRACK T_OF" " N_SIMPLE");
+  TYPE_INFO info;
+
+  printRule("N_ARRAY",
+            "T_ARRAY T_LBRACK N_IDXRANGE T_RBRACK T_OF"
+            " N_SIMPLE");
   if (currentToken[0] == "T_ARRAY")
   {
     currentToken = lex.getToken();
     if (currentToken[0] == "T_LBRACK")
     {
       currentToken = lex.getToken();
-      idxRange(lex, currentToken);
+      TYPE_INFO indexInfo = idxRange(lex, currentToken);
       if (currentToken[0] == "T_RBRACK")
       {
         currentToken = lex.getToken();
         if (currentToken[0] == "T_OF")
         {
           currentToken = lex.getToken();
-          array_temp.type = simple(lex, currentToken);
+          // Collect the type information
+          TYPE_INFO baseTypeInfo = simple(lex, currentToken);
+          info.type = ARRAY;
+          info.baseType = baseTypeInfo.type;
+          info.startIndex = indexInfo.startIndex;
+          info.endIndex = indexInfo.endIndex;
         }
         else syntaxError(currentToken);
       }
@@ -337,73 +210,70 @@ void Parser::array(Lexer &lex, vector<string> &currentToken)
     else syntaxError(currentToken);
   }
   else syntaxError(currentToken);
+  return(info);
 }
 
 int Parser::idx(Lexer &lex, vector<string> &currentToken) 
 {
-  int return_val;
-  //change this to return an int instead of void?
+  int val;
+
   printRule("N_IDX", "T_INTCONST");
   if (currentToken[0] == "T_INTCONST")
   {
-    return_val = stoi(currentToken[1]);
+    val = atoi(currentToken[1].c_str());
     currentToken = lex.getToken();
   }
   else syntaxError(currentToken);
-  return return_val;
+  return(val);
 }
 
-void Parser::idxRange(Lexer &lex, vector<string> &currentToken) 
+TYPE_INFO Parser::idxRange(Lexer &lex, 
+                           vector<string> &currentToken) 
 {
+  TYPE_INFO info;
+
   printRule("N_IDXRANGE", "N_IDX T_DOTDOT N_IDX");
-  //get integer from idx, save to temp start
-  array_temp.start = idx(lex, currentToken);
+  info.type = INDEX_RANGE;
+  info.startIndex = idx(lex, currentToken);
   if (currentToken[0] == "T_DOTDOT")
   {
     currentToken = lex.getToken();
-    //get integer from idx, save to temp end
-    array_temp.end = idx(lex, currentToken);
-    if(array_temp.start > array_temp.end)
-    {
-      cout << "Line" << currentToken[2] <<": Start index must be less than or equal to end index of array" << endl;
-    }
-
+    info.endIndex = idx(lex, currentToken);
   }
   else syntaxError(currentToken);
+  return(info);
 }
 
-int Parser::simple(Lexer &lex, vector<string> &currentToken) 
+TYPE_INFO Parser::simple(Lexer &lex, 
+                         vector<string> &currentToken) 
 {
-  //change this to return an ENUM of types?
-  int return_val;
-  //expanded it to catch each type
-  if (currentToken[0] == "T_INT")
+  TYPE_INFO info;
+  if ((currentToken[0] == "T_INT") ||
+      (currentToken[0] == "T_CHAR") || 
+      (currentToken[0] == "T_BOOL"))
   {
-    return_val = T_INT;
     printRule("N_SIMPLE", currentToken[0]);
-    currentToken = lex.getToken();
-  }
-  else if (currentToken[0] == "T_CHAR") 
-  {
-    return_val = T_CHAR;
-    printRule("N_SIMPLE", currentToken[0]);
-    currentToken = lex.getToken();
-  }
-  else if (currentToken[0] == "T_BOOL")
-  {
-    return_val = T_BOOL;
-    printRule("N_SIMPLE", currentToken[0]);
+    if (currentToken[0] == "T_INT")
+      info.type = INT;
+    else if (currentToken[0] == "T_CHAR")
+           info.type = CHAR;
+    else info.type = BOOL;
+    info.startIndex = NOT_APPLICABLE;
+    info.endIndex = NOT_APPLICABLE;
+    info.baseType = NOT_APPLICABLE;
     currentToken = lex.getToken();
   }
   else syntaxError(currentToken);
-  return return_val;
+  return(info);
 }
 
-void Parser::procDecPart(Lexer &lex, vector<string> &currentToken) 
+void Parser::procDecPart(Lexer &lex, 
+                         vector<string> &currentToken) 
 {
   if (currentToken[0] == "T_PROC")
   {
-    printRule("N_PROCDECPART", "N_PROCDEC T_SCOLON N_PROCDECPART");
+    printRule("N_PROCDECPART",
+              "N_PROCDEC T_SCOLON N_PROCDECPART");
     procDec(lex, currentToken);
     if (currentToken[0] == "T_SCOLON")
     {
@@ -430,17 +300,15 @@ void Parser::procHdr(Lexer &lex, vector<string> &currentToken)
     currentToken = lex.getToken();
     if (currentToken[0] == "T_IDENT")
     {
-      TYPE_INFO tmp;
-      tmp.type = T_PROC;
-      bool inScope = findEntryInScope(currentToken[1]);
-      scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(currentToken[1], tmp));
-      printAddition(currentToken[1], T_PROC);
-      if(inScope)
-      {
-        //already defined, bail out here
-        cout << "Line " << currentToken[2] <<": Multiply defined identifier   "<<endl;
-        exit(0);
-      }
+      TYPE_INFO info = {PROCEDURE, NOT_APPLICABLE,
+                        NOT_APPLICABLE, NOT_APPLICABLE};
+                        prSymbolTableAddition(currentToken[1],
+                                              info);
+      bool success = scopeStack.top().addEntry
+                      (SYMBOL_TABLE_ENTRY(currentToken[1],
+                                          info));
+      if (!success) 
+        printError(currentToken, MULTIPLY_DEFINED);
       currentToken = lex.getToken();
       if (currentToken[0] == "T_SCOLON")
         currentToken = lex.getToken();
@@ -449,6 +317,7 @@ void Parser::procHdr(Lexer &lex, vector<string> &currentToken)
     else syntaxError(currentToken);
   }
   else syntaxError(currentToken);
+  beginScope();
 }
 
 void Parser::stmtPart(Lexer &lex, vector<string> &currentToken) 
@@ -457,7 +326,8 @@ void Parser::stmtPart(Lexer &lex, vector<string> &currentToken)
   compoundStmt(lex, currentToken);
 }
 
-void Parser::compoundStmt(Lexer &lex, vector<string> &currentToken) 
+void Parser::compoundStmt(Lexer &lex, 
+                          vector<string> &currentToken) 
 {
   printRule("N_COMPOUND", "T_BEGIN N_STMT N_STMTLST T_END");
   if (currentToken[0] == "T_BEGIN")
@@ -487,56 +357,43 @@ void Parser::stmtLst(Lexer &lex, vector<string> &currentToken)
 void Parser::stmt(Lexer &lex, vector<string> &currentToken) 
 {
   if (currentToken[0] == "T_READ")
-  {
-    printRule("N_STMT", "N_READ");
-    readStmt(lex, currentToken);
-  }
+    {
+      printRule("N_STMT", "N_READ");
+      readStmt(lex, currentToken);
+    }
   else if (currentToken[0] == "T_WRITE")
-  {
-    printRule("N_STMT", "N_WRITE");
-    writeStmt(lex, currentToken);
-  }
+         {
+           printRule("N_STMT", "N_WRITE");
+           writeStmt(lex, currentToken);
+         }
   else if (currentToken[0] == "T_IF")
-  {
-    printRule("N_STMT", "N_CONDITION");
-    conditionStmt(lex, currentToken);
-  }
+         {
+           printRule("N_STMT", "N_CONDITION");
+           conditionStmt(lex, currentToken);
+         }
   else if (currentToken[0] == "T_WHILE")
-  {
-    printRule("N_STMT", "N_WHILE");
-    whileStmt(lex, currentToken);
-  }
+         {
+           printRule("N_STMT", "N_WHILE");
+           whileStmt(lex, currentToken);
+         }
   else if (currentToken[0] == "T_BEGIN")
-  {
-    printRule("N_STMT", "N_COMPOUND");
-    compoundStmt(lex, currentToken);
-  }
-  else 
-  {
-    printRule("N_STMT", "N_ASSIGN");
-    assignStmt(lex, currentToken);
-  }
+         {
+           printRule("N_STMT", "N_COMPOUND");
+           compoundStmt(lex, currentToken);
+         }
+  else {
+         printRule("N_STMT", "N_ASSIGN");
+         assignStmt(lex, currentToken);
+       }
 }
 
-void Parser::assignStmt(Lexer &lex, vector<string> &currentToken) 
-{
-  TYPE_INFO left_hand, right_hand;
+void Parser::assignStmt(Lexer &lex, vector<string> &currentToken) {
   printRule("N_ASSIGN", "N_VARIABLE T_ASSIGN N_EXPR");
-  left_hand = variable(lex, currentToken);
+  variable(lex, currentToken);
   if (currentToken[0] == "T_ASSIGN")
   {
     currentToken = lex.getToken();
-    right_hand = expr(lex, currentToken);
-    if (left_hand.type == T_PROC || left_hand.type == T_PROG)
-    {
-      cout << "Line" << currentToken[2] << ": Procedure/variable mismatch" << endl;
-      exit(0);
-    }
-    if (right_hand.type != left_hand.type)
-    {
-      cout << "Line" << currentToken[2] << ": Expression must be of same type as variable" << endl;
-      exit(0);
-    }
+    expr(lex, currentToken);
   }
   else syntaxError(currentToken);
 }
@@ -547,11 +404,13 @@ void Parser::procStmt(Lexer &lex, vector<string> &currentToken)
   procIdent(lex, currentToken);
 }
 
-void Parser::procIdent(Lexer &lex, vector<string> &currentToken) 
-{
+void Parser::procIdent(Lexer &lex, vector<string> &currentToken) {
   printRule("N_PROCIDENT", "T_IDENT");
   if (currentToken[0] == "T_IDENT")
   {
+    TYPE_INFO typeInfo = findEntryInAnyScope(currentToken[1]);
+    if (typeInfo.type == UNDEFINED) 
+      printError(currentToken, UNDEFINED_IDENT);
     currentToken = lex.getToken();
   }
   else syntaxError(currentToken);
@@ -560,7 +419,7 @@ void Parser::procIdent(Lexer &lex, vector<string> &currentToken)
 void Parser::readStmt(Lexer &lex, vector<string> &currentToken) 
 {
   printRule("N_READ", 
-    "T_READ T_LPAREN N_INPUTVAR N_INPUTLST T_RPAREN");
+            "T_READ T_LPAREN N_INPUTVAR N_INPUTLST T_RPAREN");
   if (currentToken[0] == "T_READ")
   {
     currentToken = lex.getToken();
@@ -592,19 +451,13 @@ void Parser::inputLst(Lexer &lex, vector<string> &currentToken)
 
 void Parser::inputVar(Lexer &lex, vector<string> &currentToken) 
 {
-  TYPE_INFO tmp_info;
   printRule("N_INPUTVAR", "N_VARIABLE");
-  tmp_info = variable(lex, currentToken);
-  if (tmp_info.type != T_INT && tmp_info.type != T_CHAR)
-  {
-    cout << "Line " << currentToken[2] << ": Input variable must be of type integer or char" << endl;
-    exit(0);
-  }
+  variable(lex, currentToken);
 }
 
-void Parser::writeStmt(Lexer &lex, vector<string> &currentToken) 
-{
-  printRule("N_WRITE", "T_WRITE T_LPAREN N_OUTPUT N_OUTPUTLST T_RPAREN");
+void Parser::writeStmt(Lexer &lex, vector<string> &currentToken) {
+  printRule("N_WRITE", 
+            "T_WRITE T_LPAREN N_OUTPUT N_OUTPUTLST T_RPAREN");
   if (currentToken[0] == "T_WRITE")
   {
     currentToken = lex.getToken();
@@ -622,8 +475,7 @@ void Parser::writeStmt(Lexer &lex, vector<string> &currentToken)
   else syntaxError(currentToken);
 }
 
-void Parser::outputLst(Lexer &lex, vector<string> &currentToken) 
-{
+void Parser::outputLst(Lexer &lex, vector<string> &currentToken) {
   if (currentToken[0] == "T_COMMA")
   {
     printRule("N_OUTPUTLST", "T_COMMA N_OUTPUT N_OUTPUTLST");
@@ -636,29 +488,19 @@ void Parser::outputLst(Lexer &lex, vector<string> &currentToken)
 
 void Parser::output(Lexer &lex, vector<string> &currentToken) 
 {
-  TYPE_INFO tmp_info;
   printRule("N_OUTPUT", "N_EXPR");
-  tmp_info = expr(lex, currentToken);
-  if (tmp_info.type != T_INT && tmp_info.type != T_CHAR)
-  {
-    cout << "Line " << currentToken[2] << ": Output expression must be of type integer or char" << endl;
-    exit(0);
-  }
+  expr(lex, currentToken);
 }
 
-void Parser::conditionStmt(Lexer &lex, vector<string> &currentToken) 
+void Parser::conditionStmt(Lexer &lex, 
+                           vector<string> &currentToken) 
 {
-  TYPE_INFO tmp_info;
-  printRule("N_CONDITION", "T_IF N_EXPR T_THEN N_STMT N_ELSEPART");
+  printRule("N_CONDITION", 
+            "T_IF N_EXPR T_THEN N_STMT N_ELSEPART");
   if (currentToken[0] == "T_IF")
   {
     currentToken = lex.getToken();
-    tmp_info = expr(lex, currentToken);
-    if(tmp_info.type != T_BOOL)
-    {
-      cout << "Line " << currentToken[2] << ": Expression must be of type boolean" << endl;
-      exit(0);
-    }
+    expr(lex, currentToken);
     if (currentToken[0] == "T_THEN")
     {
       currentToken = lex.getToken();
@@ -681,19 +523,12 @@ void Parser::elsePart(Lexer &lex, vector<string> &currentToken)
   else printRule("N_ELSEPART", "epsilon");
 }
 
-void Parser::whileStmt(Lexer &lex, vector<string> &currentToken) 
-{
-  TYPE_INFO tmp_info;
+void Parser::whileStmt(Lexer &lex, vector<string> &currentToken) {
   printRule("N_WHILE", "T_WHILE N_EXPR T_DO N_STMT");
   if (currentToken[0] == "T_WHILE")
   {
     currentToken = lex.getToken();
-    tmp_info = expr(lex, currentToken);
-    if(tmp_info.type != T_BOOL)
-    {
-      cout << "Line " << currentToken[2] << ": Expression must be of type boolean" << endl;
-      exit(0);
-    }
+    expr(lex, currentToken);
     if (currentToken[0] == "T_DO")
     {
       currentToken = lex.getToken();
@@ -704,150 +539,78 @@ void Parser::whileStmt(Lexer &lex, vector<string> &currentToken)
   else syntaxError(currentToken);
 }
 
-TYPE_INFO Parser::expr(Lexer &lex, vector<string> &currentToken) 
+void Parser::expr(Lexer &lex, vector<string> &currentToken) 
 {
-  TYPE_INFO tmp_info1, tmp_info2;
   printRule("N_EXPR", "N_SIMPLEEXPR N_OPEXPR");
-  tmp_info1 = simpleExpr(lex, currentToken);
-  tmp_info2 = opExpr(lex, currentToken);
-  if(tmp_info2.type != NOT_APPLICABLE)
-  {   
-    //we don't care about the actual type of either at this point
-    tmp_info1.type = T_BOOL;
-    return tmp_info1;
-  }
-  else if (tmp_info1.type != tmp_info2.type)
-  {
-    cout << "Line: " << currentToken[2] << ": Expressions must both be int, or both char, or both boolean" << endl;
-    exit(0);
-  }
-  else
-  {
-    return  tmp_info1;
-  }
+  simpleExpr(lex, currentToken);
+  opExpr(lex, currentToken);
 }
 
-TYPE_INFO Parser::opExpr(Lexer &lex, vector<string> &currentToken) 
+void Parser::opExpr(Lexer &lex, vector<string> &currentToken) 
 {
-  TYPE_INFO tmp_info;
   if ((currentToken[0] == "T_LT") || 
-    (currentToken[0] == "T_LE")   || 
-    (currentToken[0] == "T_NE")   || 
-    (currentToken[0] == "T_EQ")   || 
-    (currentToken[0] == "T_GT")   || 
-    (currentToken[0] == "T_GE"))
+      (currentToken[0] == "T_LE") || 
+      (currentToken[0] == "T_NE") || 
+      (currentToken[0] == "T_EQ") || 
+      (currentToken[0] == "T_GT") || 
+      (currentToken[0] == "T_GE"))
   { 
     printRule("N_OPEXPR", "N_RELOP N_SIMPLEEXPR");
     relOp(lex, currentToken);
-    tmp_info = simpleExpr(lex, currentToken);
+    simpleExpr(lex, currentToken);
   }
-  else
-  {
-    printRule("N_ADDOPLST", "epsilon");
-    tmp_info.type = NOT_APPLICABLE;
-  }
-  return tmp_info;
+  else printRule("N_OPEXPR", "epsilon");
 }
 
-TYPE_INFO Parser::simpleExpr(Lexer &lex, vector<string> &currentToken) 
+void Parser::simpleExpr(Lexer &lex, 
+                        vector<string> &currentToken) 
 {
-  TYPE_INFO tmp_info;
   printRule("N_SIMPLEEXPR", "N_TERM N_ADDOPLST");
-  tmp_info = term(lex, currentToken);
+  term(lex, currentToken);
   addOpLst(lex, currentToken);
-  return tmp_info;
 }
 
-TYPE_INFO Parser::addOpLst(Lexer &lex, vector<string> &currentToken) 
+void Parser::addOpLst(Lexer &lex, vector<string> &currentToken) 
 {
-  TYPE_INFO tmp_info, tmp_info1, tmp_info2;
   if ((currentToken[0] == "T_PLUS") || 
-    (currentToken[0] == "T_MINUS"))
+      (currentToken[0] == "T_MINUS") ||
+      (currentToken[0] == "T_OR"))
   {
     printRule("N_ADDOPLST", "N_ADDOP N_TERM N_ADDOPLST");
-    tmp_info1 = addOp(lex, currentToken);
-    tmp_info = term(lex, currentToken);
-    tmp_info2 = addOpLst(lex, currentToken);
-    if(tmp_info1.type != T_INT || tmp_info2.type != T_INT)
-    {
-      cout << "Line " << currentToken[2] << ": Expression must be of type integer" << endl;
-      exit(0);
-    }
+    addOp(lex, currentToken);
+    term(lex, currentToken);
+    addOpLst(lex, currentToken);
   } 
-  else if (currentToken[0] == "T_OR")
-  {
-    printRule("N_ADDOPLST", "N_ADDOP N_TERM N_ADDOPLST");
-    tmp_info1 = addOp(lex, currentToken);
-    tmp_info = term(lex, currentToken);
-    tmp_info2 = addOpLst(lex, currentToken);
-    if(tmp_info1.type != T_BOOL || tmp_info2.type != T_BOOL)
-    {
-      cout << "Line " << currentToken[2] << ": Expression must be of type boolean" << endl;
-      exit(0);
-    }
-  } 
-  else 
-  {
-    printRule("N_ADDOPLST", "epsilon");
-    tmp_info.type = NOT_APPLICABLE;
-  }
-  return tmp_info;
+  else printRule("N_ADDOPLST", "epsilon");
 }
 
-TYPE_INFO Parser::term(Lexer &lex, vector<string> &currentToken) 
+void Parser::term(Lexer &lex, vector<string> &currentToken) 
 {
-  TYPE_INFO tmp_info;
   printRule("N_TERM", "N_FACTOR N_MULTOPLST");
-  tmp_info = factor(lex, currentToken);
+  factor(lex, currentToken);
   multOpLst(lex, currentToken);
-  return tmp_info;
 }
 
-TYPE_INFO Parser::multOpLst(Lexer &lex, vector<string> &currentToken) 
-{
-  TYPE_INFO tmp_info, tmp_info1, tmp_info2;
+void Parser::multOpLst(Lexer &lex, vector<string> &currentToken) {
   if ((currentToken[0] == "T_MULT") || 
-    (currentToken[0] == "T_DIV")) 
+      (currentToken[0] == "T_DIV") || 
+      (currentToken[0] == "T_AND")) 
   {
     printRule("N_MULTOPLST", "N_MULTOP N_FACTOR N_MULTOPLST");
-    tmp_info1 = multOp(lex, currentToken);
-    tmp_info = factor(lex, currentToken);
-    tmp_info2 = multOpLst(lex, currentToken);
-    if(tmp_info1.type != T_INT || tmp_info2.type != T_INT)
-    {
-      cout << "Line " << currentToken[2] << ": Expression must be of type integer" << endl;
-      exit(0);
-    }
+    multOp(lex, currentToken);
+    factor(lex, currentToken);
+    multOpLst(lex, currentToken);
   }
-  else if (currentToken[0] == "T_AND")
-  {
-    printRule("N_MULTOPLST", "N_MULTOP N_FACTOR N_MULTOPLST");
-    tmp_info1 = multOp(lex, currentToken);
-    tmp_info =  tmp_info = factor(lex, currentToken);
-    tmp_info2 = multOpLst(lex, currentToken);
-    if(tmp_info1.type != T_BOOL || tmp_info2.type != T_BOOL)
-    {
-      cout << "Line " << currentToken[2] << ": Expression must be of type boolean" << endl;
-      exit(0);
-    }
-  }
-  else 
-  {
-    tmp_info.type = NOT_APPLICABLE;
-    printRule("N_MULTOPLST", "epsilon");
-  }
-  return tmp_info;
+  else printRule("N_MULTOPLST", "epsilon");
 }
 
-TYPE_INFO Parser::factor(Lexer &lex, vector<string> &currentToken) 
+void Parser::factor(Lexer &lex, vector<string> &currentToken) 
 {
-  bool hasSign;
-  TYPE_INFO tmp_info;
   if (currentToken[0] == "T_LPAREN")
   {
     printRule("N_FACTOR", "T_LPAREN N_EXPR T_RPAREN");
     currentToken = lex.getToken();
-    tmp_info = expr(lex, currentToken);
+    expr(lex, currentToken);
     if (currentToken[0] == "T_RPAREN")
       currentToken = lex.getToken();
     else syntaxError(currentToken);
@@ -859,98 +622,70 @@ TYPE_INFO Parser::factor(Lexer &lex, vector<string> &currentToken)
       printRule("N_FACTOR", "T_NOT N_FACTOR");
       currentToken = lex.getToken();
       factor(lex, currentToken);
-      tmp_info.type = T_BOOL;
     }
     else
     {
       if ((currentToken[0] == "T_INTCONST") ||
-         (currentToken[0] == "T_CHARCONST") ||
-         (currentToken[0] == "T_TRUE")      || 
-         (currentToken[0] == "T_FALSE"))
+          (currentToken[0] == "T_CHARCONST") ||
+          (currentToken[0] == "T_TRUE") || 
+          (currentToken[0] == "T_FALSE"))
       {
         printRule("N_FACTOR", "N_CONST");
-        tmp_info = constant(lex, currentToken);
+        constant(lex, currentToken);
       }
       else
       {
         printRule("N_FACTOR", "N_SIGN N_VARIABLE");
-        hasSign = sign(lex, currentToken);
-        tmp_info = variable(lex, currentToken);
-        if(hasSign && tmp_info.type != T_INT)
-        {
-          cout << "Line" << currentToken[2] << ": Expression must be of type integer" << endl;
-          exit(0);
-        }
+        sign(lex, currentToken);
+        variable(lex, currentToken);
       }
     }
   }
-  return tmp_info;
 }
 
-bool Parser::sign(Lexer &lex, vector<string> &currentToken) 
+void Parser::sign(Lexer &lex, vector<string> &currentToken) 
 {
   if ((currentToken[0] == "T_PLUS") || 
-    (currentToken[0] == "T_MINUS"))
+      (currentToken[0] == "T_MINUS"))
   {
     printRule("N_SIGN", currentToken[0]); 
     currentToken = lex.getToken();
-    return true;
   }
-  else 
-  {
-    printRule("N_SIGN", "epsilon");
-    return false;
-  }
+  else printRule("N_SIGN", "epsilon");
 }
 
-TYPE_INFO Parser::addOp(Lexer &lex, vector<string> &currentToken) 
+void Parser::addOp(Lexer &lex, vector<string> &currentToken) 
 {
-  TYPE_INFO tmp_info;
   if ((currentToken[0] == "T_PLUS") || 
-    (currentToken[0] == "T_MINUS")  )
+      (currentToken[0] == "T_MINUS") ||
+      (currentToken[0] == "T_OR"))
   { 
-    tmp_info.type = T_INT;
-    printRule("N_ADDOP", currentToken[0]);  
-    currentToken = lex.getToken();
-  }
-  else if (currentToken[0] == "T_OR")
-  { 
-    tmp_info.type = T_BOOL;
     printRule("N_ADDOP", currentToken[0]);  
     currentToken = lex.getToken();
   }
   else syntaxError(currentToken);
-  return tmp_info;
 }
 
-TYPE_INFO Parser::multOp(Lexer &lex, vector<string> &currentToken) 
+void Parser::multOp(Lexer &lex, vector<string> &currentToken) 
 {
-  TYPE_INFO tmp_info;
   if ((currentToken[0] == "T_MULT") || 
-    (currentToken[0] == "T_DIV"))
+      (currentToken[0] == "T_DIV") || 
+      (currentToken[0] == "T_AND"))
   {
-    tmp_info.type = T_INT;
-    printRule("N_MULTOP", currentToken[0]);  
-    currentToken = lex.getToken();
-  }
-  else if (currentToken[0] == "T_AND")
-  {
-    tmp_info.type = T_BOOL;
     printRule("N_MULTOP", currentToken[0]);  
     currentToken = lex.getToken();
   }
   else syntaxError(currentToken);
-  return tmp_info;
 }
 
 void Parser::relOp(Lexer &lex, vector<string> &currentToken) 
 {
   if ((currentToken[0] == "T_LT") || 
-    (currentToken[0] == "T_LE") || 
-    (currentToken[0] == "T_NE") || 
-    (currentToken[0] == "T_EQ") || 
-    (currentToken[0] == "T_GT") || 
-    (currentToken[0] == "T_GE"))
+      (currentToken[0] == "T_LE") || 
+      (currentToken[0] == "T_NE") || 
+      (currentToken[0] == "T_EQ") || 
+      (currentToken[0] == "T_GT") || 
+      (currentToken[0] == "T_GE"))
   {
     printRule("N_RELOP", currentToken[0]);   
     currentToken = lex.getToken();
@@ -958,105 +693,137 @@ void Parser::relOp(Lexer &lex, vector<string> &currentToken)
   else syntaxError(currentToken);
 }
 
-TYPE_INFO Parser::variable(Lexer &lex, vector<string> &currentToken) 
+void Parser::variable(Lexer &lex, vector<string> &currentToken) 
 {
-  bool isIndexed;
-  TYPE_INFO tmp_info;
   printRule("N_VARIABLE", "T_IDENT N_IDXVAR");
   if (currentToken[0] == "T_IDENT")
   {
-    
-    if(!findEntryInAnyScope(currentToken[1]))
-    {
-      cout << "Line " << currentToken[2] <<": Undefined identifier"<<endl;
-      exit(0);
-    }
+    TYPE_INFO typeInfo = 
+      findEntryInAnyScope(currentToken[1]);
+    if (typeInfo.type == UNDEFINED) 
+      printError(currentToken, UNDEFINED_IDENT);
     currentToken = lex.getToken();
-    isIndexed = idxVar(lex, currentToken);
-    tmp_info = findInfoInAnyScope(currentToken[1]);
-    cout << "variableType" << tmp_info.type << endl;
-    if(!tmp_info.isArray && isIndexed)
-    {
-      cout << "Line " << currentToken[2] << ": Indexed variable must be of array type" << endl;
-      exit(0);
-    }
+    idxVar(lex, currentToken);
   }
   else syntaxError(currentToken);
-  return tmp_info;
 }
 
-bool Parser::idxVar(Lexer &lex, vector<string> &currentToken) 
+void Parser::idxVar(Lexer &lex, vector<string> &currentToken) 
 {
-  TYPE_INFO tmp_info;
   if (currentToken[0] == "T_LBRACK")
   {
     printRule("N_IDXVAR", "T_LBRACK N_EXPR T_RBRACK");
     currentToken = lex.getToken();
-    tmp_info = expr(lex, currentToken);
-    if (tmp_info.type == UNDEFINED || tmp_info.type == NOT_APPLICABLE)
-    {
-      //Crash out here: Array must be indexed
-      cout << "Line "<< currentToken[2] <<": Array variable must be indexed"<< endl;
-      exit(0);
-    }
-    else if (tmp_info.type == T_PROC || tmp_info.type == T_PROG)
-    {
-      //Crash out here: index cannot be proc
-      cout << "Line "<< currentToken[2] <<": Procedure/variable mismatch"<< endl;
-      exit(0);
-    }
-    else if (tmp_info.type != T_INT)
-    {
-      //Crash out here: index must be int
-      cout << "Line "<< currentToken[2] <<": Index expression must be of type integer"<< endl;
-      exit(0);
-    }
+    expr(lex, currentToken);
     if (currentToken[0] == "T_RBRACK")
       currentToken = lex.getToken();
     else syntaxError(currentToken);
   }
-  else
-  {
-    printRule("N_IDXVAR", "epsilon");
-    return false;
-  }
-  return true;
+  else printRule("N_IDXVAR", "epsilon");
 }
 
-TYPE_INFO Parser::constant(Lexer &lex, vector<string> &currentToken) 
+void Parser::constant(Lexer &lex, vector<string> &currentToken) 
 {
-  TYPE_INFO tmp_info;
   if ((currentToken[0] == "T_TRUE") ||
-    (currentToken[0] == "T_FALSE"))
+      (currentToken[0] == "T_FALSE"))
   {
-    tmp_info.type = T_BOOL;
     printRule("N_CONST", "N_BOOLCONST");
     boolConst(lex, currentToken);
   }
-  else if (currentToken[0] == "T_INTCONST")
-  {
-    tmp_info.type = T_INT;
-    printRule("N_CONST", currentToken[0]);
-    currentToken = lex.getToken();
-  }  
-  else if (currentToken[0] == "T_CHARCONST")
-  {
-    tmp_info.type = T_CHAR;
-    printRule("N_CONST", currentToken[0]);
-    currentToken = lex.getToken();
- }
- else syntaxError(currentToken);
- return tmp_info;
+  else if ((currentToken[0] == "T_INTCONST") ||
+           (currentToken[0] == "T_CHARCONST"))
+       {
+         printRule("N_CONST", currentToken[0]);
+         currentToken = lex.getToken();
+       }
+       else syntaxError(currentToken);
 }
 
 void Parser::boolConst(Lexer &lex, vector<string> &currentToken) {
- if ((currentToken[0] == "T_TRUE") ||
-   (currentToken[0] == "T_FALSE"))
- {
-   printRule("N_BOOLCONST", currentToken[0]);  
-   currentToken = lex.getToken();
- }
- else syntaxError(currentToken);
+  if ((currentToken[0] == "T_TRUE") ||
+      (currentToken[0] == "T_FALSE"))
+  {
+    printRule("N_BOOLCONST", currentToken[0]);  
+    currentToken = lex.getToken();
+  }
+  else syntaxError(currentToken);
+}
+
+void Parser::beginScope() 
+{
+  scopeStack.push(SYMBOL_TABLE());
+  if (print_symbolTableMgt_flag) 
+    printf("\n\n>>> Entering new scope...\n");
+}
+
+void Parser::endScope() 
+{
+  scopeStack.pop();
+  if (print_symbolTableMgt_flag) 
+    printf("\n<<< Exiting scope...\n");
+}
+
+void Parser::prSymbolTableAddition(const string identName, 
+                                   const TYPE_INFO typeInfo) 
+{
+  if (print_symbolTableMgt_flag) 
+  {
+   char *cstr = new char[identName.length() + 1];
+   strcpy(cstr, identName.c_str());
+   printf("\n+++ Adding %s to symbol table with type ", cstr);
+   delete [] cstr;
+   switch (typeInfo.type) {
+	case PROGRAM	: printf("PROGRAM\n"); break;
+	case PROCEDURE	: printf("PROCEDURE\n"); break;
+	case INT		: printf("INTEGER\n"); break;
+	case CHAR		: printf("CHAR\n"); break;
+	case BOOL		: printf("BOOLEAN\n"); break;
+	case ARRAY		: printf("ARRAY ");
+				  printf("%d .. %d OF ",
+				         typeInfo.startIndex, 
+				         typeInfo.endIndex);
+				  switch (typeInfo.baseType) {
+				    case INT : printf("INTEGER\n"); 
+                                     break;
+				    case CHAR: printf("CHAR\n"); 
+                                     break;
+				    case BOOL: printf("BOOLEAN\n"); 
+                                     break;
+				    default  : printf("UNKNOWN\n"); 
+                                     break;
+				  }
+				  break;
+	default 		: printf("UNKNOWN\n"); break;
+   }
+  }
+}
+
+TYPE_INFO Parser::findEntryInAnyScope(const string theName) 
+{
+  TYPE_INFO info = {UNDEFINED, NOT_APPLICABLE, NOT_APPLICABLE,
+                    NOT_APPLICABLE};
+  if (scopeStack.empty( )) return(info);
+  info = scopeStack.top().findEntry(theName);
+  if (info.type != UNDEFINED)
+    return(info);
+  else { // check in "next higher" scope
+	   SYMBOL_TABLE symbolTable = scopeStack.top( );
+	   scopeStack.pop( );
+	   info = findEntryInAnyScope(theName);
+	   scopeStack.push(symbolTable); // restore the stack
+	   return(info);
+  }
+}
+
+void Parser::cleanUp() 
+{
+  if (scopeStack.empty()) 
+    return;
+  else 
+  {
+    scopeStack.pop();
+    cleanUp();
+  }
 }
 
 
@@ -1066,6 +833,4 @@ void Parser::boolConst(Lexer &lex, vector<string> &currentToken) {
 
 
 
-
-
-
+    

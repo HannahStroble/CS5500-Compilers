@@ -11,12 +11,12 @@
 #include <utility>
 #include <regex>
 #include <iomanip>
-
 using namespace std;
 
 
-class Lexer {
-	public:
+class Lexer 
+{
+  public:
 		////////////////////////////////////////////////////////////
 		/// @brief	Initializes the Lexer class
 		/// @post 	regular_expressions will be populated with 
@@ -127,6 +127,7 @@ class Lexer {
 		int getToken_index; 
 		///< Index to keep track of the next token 
 		///< to give back for getToken()
+
 };
 
 #endif

@@ -20,10 +20,13 @@ test: driver
 driver: $(OBJECTS)
 	@$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@
 	
+debug: $(OBJECTS)
+	@$(CXX) $(CXXFLAGS) -g3 $(OBJECTS) -o $@
 
 clean:
 	-@rm -f core
 	-@rm -f driver
+	-@rm -f debug
 	-@rm -f depend
 	-@rm -f $(OBJECTS)
 
