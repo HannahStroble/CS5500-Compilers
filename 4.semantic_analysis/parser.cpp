@@ -2,7 +2,7 @@
 
 // Static Parser variables
 bool Parser::print_productions_flag = false;
-bool Parser::print_symbolTableMgt_flag = true;
+bool Parser::print_symbolTableMgt_flag = false;
 
 
 void Parser::printRule(const string lhs, const string rhs)
@@ -231,6 +231,8 @@ TYPE_INFO Parser::idxRange(Lexer &lex, vector<string> &currentToken)
   {
     currentToken = lex.getToken();
     info.endIndex = idx(lex, currentToken);
+    if(info.startIndex > info.endIndex)
+      printError(currentToken, "Start index must be less than or equal to end index of array");
   }
   else syntaxError(currentToken);
   return(info);
@@ -826,20 +828,20 @@ bool Parser::idxVar(Lexer &lex, vector<string> &currentToken)
     typeInfo = expr(lex, currentToken);
     if(typeInfo.type == UNDEFINED || typeInfo.type == NOT_APPLICABLE)
       printError(currentToken, "Array variable must be indexed");
-    if(typeInfo.type == PROCEDURE || typeInfo.type == PROGRAM)
+    else if(typeInfo.type == PROCEDURE || typeInfo.type == PROGRAM)
       printError(currentToken, "Procedure/variable mismatch");
-    if(typeInfo.type != INT)
+    else if(typeInfo.type != INT)
       printError(currentToken, "Index expression must be of type integer");
-    if (currentToken[0] == "T_RBRACK")
+    else if (currentToken[0] == "T_RBRACK")
       currentToken = lex.getToken();
     else syntaxError(currentToken);
   }
   else
   { 
     printRule("N_IDXVAR", "epsilon");
-    return true;
+    return false;
   }
-  return false;
+  return true;
 }
 
 TYPE_INFO Parser::constant(Lexer &lex, vector<string> &currentToken) 
