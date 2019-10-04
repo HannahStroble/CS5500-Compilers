@@ -1,7 +1,7 @@
 #include "parser.h"
 
 // Static Parser variables
-bool Parser::print_productions_flag = false;
+bool Parser::print_productions_flag = true;
 bool Parser::print_symbolTableMgt_flag = false;
 
 
@@ -382,7 +382,7 @@ void Parser::assignStmt(Lexer &lex, vector<string> &currentToken)
   left_h = variable(lex, currentToken);
   if(left_h.type == PROCEDURE || left_h.type == PROGRAM)
   {
-    cout << "Line " << currentToken[2] << ": Procedure/variable mismatch" << endl;
+    cout << "Line " << currentToken[2] << ": **Procedure/variable mismatch" << endl;
     exit(0);
   }
   if (currentToken[0] == "T_ASSIGN")
@@ -550,7 +550,11 @@ void Parser::whileStmt(Lexer &lex, vector<string> &currentToken)
   if (currentToken[0] == "T_WHILE")
   {
     currentToken = lex.getToken();
+    cout << "starting the bool ################" << endl;
+    cout << typeInfo.type << " is the type of " << currentToken[1] << endl;
     typeInfo = expr(lex, currentToken);
+    cout << "came ouf of the bool ##################" << endl;
+    cout << typeInfo.type << " is the type of " << currentToken[1] << endl;
     if(typeInfo.type != BOOL)
     {
       cout << "Line " << currentToken[2] << ": Expression must be of type boolean" << endl;

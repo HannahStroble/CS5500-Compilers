@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # To run:
 #	bash hw4_run_script.sh
 #	OR

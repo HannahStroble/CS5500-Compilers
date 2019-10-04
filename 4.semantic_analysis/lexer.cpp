@@ -7,7 +7,7 @@ const string INVALID_INTCONST =
   "**** Invalid integer constant";
 
 // Static Lexer variables
-bool Lexer::print_token_lexemes_flag = false;
+bool Lexer::print_token_lexemes_flag = true;
 
 Lexer::Lexer() {
 	getToken_index = 0;
