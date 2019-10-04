@@ -55,12 +55,10 @@ class Parser
 	void varDec(Lexer &lex, vector<string> &currentToken);
 	void ident(Lexer &lex, vector<string> &currentToken);
 	void identLst(Lexer &lex, vector<string> &currentToken);
-	TYPE_INFO identType(Lexer &lex, 
-                         vector<string> &currentToken);
+	TYPE_INFO identType(Lexer &lex, vector<string> &currentToken);
 	TYPE_INFO array(Lexer &lex, vector<string> &currentToken);
 	int idx(Lexer &lex, vector<string> &currentToken);
-	TYPE_INFO idxRange(Lexer &lex, 
-                        vector<string> &currentToken);
+	TYPE_INFO idxRange(Lexer &lex, vector<string> &currentToken);
 	TYPE_INFO simple(Lexer &lex, vector<string> &currentToken);
 	void procDecPart(Lexer &lex, vector<string> &currentToken);
 	void procDec(Lexer &lex, vector<string> &currentToken);
@@ -78,24 +76,23 @@ class Parser
 	void writeStmt(Lexer &lex, vector<string> &currentToken);
 	void outputLst(Lexer &lex, vector<string> &currentToken);
 	void output(Lexer &lex, vector<string> &currentToken);
-	void conditionStmt(Lexer &lex, 
-                        vector<string> &currentToken);
+	void conditionStmt(Lexer &lex, vector<string> &currentToken);
 	void elsePart(Lexer &lex, vector<string> &currentToken);
 	void whileStmt(Lexer &lex, vector<string> &currentToken);
-	void expr(Lexer &lex, vector<string> &currentToken);
-	void opExpr(Lexer &lex, vector<string> &currentToken);
-	void simpleExpr(Lexer &lex, vector<string> &currentToken);
-	void addOpLst(Lexer &lex, vector<string> &currentToken);
-	void term(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO expr(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO opExpr(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO simpleExpr(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO addOpLst(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO term(Lexer &lex, vector<string> &currentToken);
 	void multOpLst(Lexer &lex, vector<string> &currentToken);
-	void factor(Lexer &lex, vector<string> &currentToken);
-	void sign(Lexer &lex, vector<string> &currentToken);
-	void addOp(Lexer &lex, vector<string> &currentToken);
-	void multOp(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO factor(Lexer &lex, vector<string> &currentToken);
+	bool sign(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO addOp(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO multOp(Lexer &lex, vector<string> &currentToken);
 	void relOp(Lexer &lex, vector<string> &currentToken);
-	void variable(Lexer &lex, vector<string> &currentToken);
-	void idxVar(Lexer &lex, vector<string> &currentToken);
-	void constant(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO variable(Lexer &lex, vector<string> &currentToken);
+	bool idxVar(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO constant(Lexer &lex, vector<string> &currentToken);
 	void boolConst(Lexer &lex, vector<string> &currentToken);
 
 
