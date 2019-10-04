@@ -877,7 +877,7 @@ TYPE_INFO Parser::constant(Lexer &lex, vector<string> &currentToken)
     return typeInfo;
 }
 
-void Parser::boolConst(Lexer &lex, vector<string> &currentToken) 
+TYPE_INFO Parser::boolConst(Lexer &lex, vector<string> &currentToken) 
 {
   if ((currentToken[0] == "T_TRUE") ||
       (currentToken[0] == "T_FALSE"))

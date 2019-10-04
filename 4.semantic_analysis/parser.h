@@ -93,7 +93,7 @@ class Parser
 	TYPE_INFO variable(Lexer &lex, vector<string> &currentToken);
 	bool idxVar(Lexer &lex, vector<string> &currentToken);
 	TYPE_INFO constant(Lexer &lex, vector<string> &currentToken);
-	void boolConst(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO boolConst(Lexer &lex, vector<string> &currentToken);
 
 
 	/// Symbol table mgt calls
