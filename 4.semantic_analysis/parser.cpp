@@ -688,7 +688,12 @@ TYPE_INFO Parser::factor(Lexer &lex, vector<string> &currentToken)
       currentToken = lex.getToken();
       returnType = factor(lex, currentToken);
       // bool test
-      //return returnType;
+      if (returnType.type != BOOL)
+        {
+          cout << "Line " << currentToken[2] << ": Expression must be of type bool" << endl;
+          exit(0);
+        }
+      return returnType;
     }
     else
     {
