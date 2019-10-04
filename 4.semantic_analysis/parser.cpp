@@ -2,7 +2,7 @@
 
 // Static Parser variables
 bool Parser::print_productions_flag = true;
-bool Parser::print_symbolTableMgt_flag = false;
+bool Parser::print_symbolTableMgt_flag = true;
 
 
 void Parser::printRule(const string lhs, const string rhs)
@@ -582,11 +582,11 @@ TYPE_INFO Parser::expr(Lexer &lex, vector<string> &currentToken)
     returnType = {BOOL, NOT_APPLICABLE, NOT_APPLICABLE, NOT_APPLICABLE};
     return returnType;
   }
-  else if (simpleType.type != opType.type)
-  {
-    cout << "Line: " << currentToken[2] << ": Expressions must both be int, or both char, or both boolean" << endl;
-    exit(0);  
-  }
+  // else if (simpleType.type != opType.type)
+  // {
+  //   cout << "Line: " << currentToken[2] << ": Expressions must both be int, or both char, or both boolean" << endl;
+  //   exit(0);  
+  // }
   else
   {
     return simpleType;
@@ -619,7 +619,7 @@ TYPE_INFO Parser::simpleExpr(Lexer &lex, vector<string> &currentToken)
 {
   TYPE_INFO termType;
   printRule("N_SIMPLEEXPR", "N_TERM N_ADDOPLST");
-  term(lex, currentToken);
+  termType = term(lex, currentToken);
   addOpLst(lex, currentToken);
   return termType;
 }
@@ -686,9 +686,9 @@ TYPE_INFO Parser::factor(Lexer &lex, vector<string> &currentToken)
     {
       printRule("N_FACTOR", "T_NOT N_FACTOR");
       currentToken = lex.getToken();
-      factor(lex, currentToken);
-      returnType = {BOOL, NOT_APPLICABLE, NOT_APPLICABLE, NOT_APPLICABLE};
-      return returnType;
+      returnType = factor(lex, currentToken);
+      // bool test
+      //return returnType;
     }
     else
     {
@@ -856,7 +856,7 @@ TYPE_INFO Parser::constant(Lexer &lex, vector<string> &currentToken)
   {
     typeInfo.type = BOOL;
     printRule("N_CONST", "N_BOOLCONST");
-    boolConst(lex, currentToken);
+    typeInfo = boolConst(lex, currentToken);
   }
   else if ((currentToken[0] == "T_INTCONST") ||
            (currentToken[0] == "T_CHARCONST"))
@@ -869,6 +869,7 @@ TYPE_INFO Parser::constant(Lexer &lex, vector<string> &currentToken)
       currentToken = lex.getToken();
     }
        else syntaxError(currentToken);
+    return typeInfo;
 }
 
 void Parser::boolConst(Lexer &lex, vector<string> &currentToken) 
