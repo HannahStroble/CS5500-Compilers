@@ -579,8 +579,9 @@ TYPE_INFO Parser::expr(Lexer &lex, vector<string> &currentToken)
 
   if(opType.type != NOT_APPLICABLE)
   {
-    returnType = {BOOL, NOT_APPLICABLE, NOT_APPLICABLE, NOT_APPLICABLE};
-    return returnType;
+    //returnType = {BOOL, NOT_APPLICABLE, NOT_APPLICABLE, NOT_APPLICABLE};
+    simpleType.type = BOOL;
+    return simpleType;
   }
   // else if (simpleType.type != opType.type)
   // {
