@@ -212,7 +212,9 @@ vector<string> Lexer::getToken() {
   if (print_token_lexemes_flag)
        cout << "TOKEN: " << tokens[getToken_index] 
             << "\t" << setw(12)
-            << "LEXEME: " << lexemes[getToken_index] << endl;
+            << "LEXEME: " << lexemes[getToken_index] 
+            << "Line number: " << current_token[2]
+            << endl;
 
   getToken_index++;
 

@@ -84,7 +84,7 @@ class Parser
 	TYPE_INFO simpleExpr(Lexer &lex, vector<string> &currentToken);
 	TYPE_INFO addOpLst(Lexer &lex, vector<string> &currentToken);
 	TYPE_INFO term(Lexer &lex, vector<string> &currentToken);
-	void multOpLst(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO multOpLst(Lexer &lex, vector<string> &currentToken);
 	TYPE_INFO factor(Lexer &lex, vector<string> &currentToken);
 	bool sign(Lexer &lex, vector<string> &currentToken);
 	TYPE_INFO addOp(Lexer &lex, vector<string> &currentToken);
@@ -94,6 +94,7 @@ class Parser
 	bool idxVar(Lexer &lex, vector<string> &currentToken);
 	TYPE_INFO constant(Lexer &lex, vector<string> &currentToken);
 	TYPE_INFO boolConst(Lexer &lex, vector<string> &currentToken);
+	void AOP(Lexer &lex, vector<string> &currentToken);
 
 
 	/// Symbol table mgt calls
