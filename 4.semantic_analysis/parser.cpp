@@ -21,7 +21,7 @@ void Parser::printError(const vector<string> currentToken, const string msg) con
 {
   cout << "Line " << currentToken[2]
        << ": " << msg << endl;
-  exit(1);
+  exit(0);
 }
 
 
