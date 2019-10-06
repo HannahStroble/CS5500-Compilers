@@ -551,7 +551,7 @@ void Parser::whileStmt(Lexer &lex, vector<string> &currentToken)
   {
     currentToken = lex.getToken();
     cout << "starting the bool ################" << endl;
-    cout << typeInfo.type << " is the type of " << currentToken[1] << endl;
+    cout <<"Item going in expr: " << currentToken[1] << endl;
     typeInfo = expr(lex, currentToken);
     cout << "came ouf of the bool ##################" << endl;
     cout << typeInfo.type << " is the type of " << currentToken[1] << endl;
@@ -572,21 +572,23 @@ void Parser::whileStmt(Lexer &lex, vector<string> &currentToken)
 
 TYPE_INFO Parser::expr(Lexer &lex, vector<string> &currentToken) 
 {
-  TYPE_INFO simpleType, opType, returnType; 
+  TYPE_INFO simpleType, opType; 
   printRule("N_EXPR", "N_SIMPLEEXPR N_OPEXPR");
   simpleType = simpleExpr(lex, currentToken);
+  cout << "VAR TYPE IN EXPR from simpleExpr " << currentToken[1] << ": " << simpleType.type << endl;
   opType = opExpr(lex, currentToken);
+  cout << "VAR TYPE IN EXPR from opExpr " << currentToken[1] << ": " << opType.type << endl;
 
   if(opType.type != NOT_APPLICABLE)
   {
-    returnType = {BOOL, NOT_APPLICABLE, NOT_APPLICABLE, NOT_APPLICABLE};
-    return returnType;
+    simpleType.type = BOOL;
+    return simpleType;
   }
-  // else if (simpleType.type != opType.type)
-  // {
-  //   cout << "Line: " << currentToken[2] << ": Expressions must both be int, or both char, or both boolean" << endl;
-  //   exit(0);  
-  // }
+  else if (simpleType.type != opType.type)
+  {
+    cout << "Line: " << currentToken[2] << ": Expressions must both be int, or both char, or both boolean" << endl;
+    exit(0);  
+  }
   else
   {
     return simpleType;
@@ -612,6 +614,7 @@ TYPE_INFO Parser::opExpr(Lexer &lex, vector<string> &currentToken)
   { 
     returnType = {NOT_APPLICABLE, NOT_APPLICABLE, NOT_APPLICABLE, NOT_APPLICABLE};
     printRule("N_OPEXPR", "epsilon");
+    return returnType;
   }
 }
 
@@ -620,6 +623,7 @@ TYPE_INFO Parser::simpleExpr(Lexer &lex, vector<string> &currentToken)
   TYPE_INFO termType;
   printRule("N_SIMPLEEXPR", "N_TERM N_ADDOPLST");
   termType = term(lex, currentToken);
+  cout << "VAR TYPE IN SIMPLE EXPR " << currentToken[1] << ": " << termType.type << endl;
   addOpLst(lex, currentToken);
   return termType;
 }
@@ -648,6 +652,7 @@ TYPE_INFO Parser::term(Lexer &lex, vector<string> &currentToken)
   TYPE_INFO factorType;
   printRule("N_TERM", "N_FACTOR N_MULTOPLST");
   factorType = factor(lex, currentToken);
+  cout << "VAR TYPE IN TERM for FACTOR " << currentToken[1] << ": " << factorType.type << endl;
   multOpLst(lex, currentToken);
   return factorType;
 }
@@ -675,6 +680,8 @@ TYPE_INFO Parser::factor(Lexer &lex, vector<string> &currentToken)
     printRule("N_FACTOR", "T_LPAREN N_EXPR T_RPAREN");
     currentToken = lex.getToken();
     exprType = expr(lex, currentToken);
+    // check here for bool? The x in [x] must be int?
+    
     if (currentToken[0] == "T_RPAREN")
       currentToken = lex.getToken();
     else syntaxError(currentToken);
@@ -690,7 +697,7 @@ TYPE_INFO Parser::factor(Lexer &lex, vector<string> &currentToken)
       // bool test
       if (returnType.type != BOOL)
         {
-          cout << "Line " << currentToken[2] << ": Expression must be of type bool" << endl;
+          cout << "Line " << currentToken[2] << ": Expression must be of type boolean" << endl;
           exit(0);
         }
       return returnType;
@@ -711,6 +718,7 @@ TYPE_INFO Parser::factor(Lexer &lex, vector<string> &currentToken)
         printRule("N_FACTOR", "N_SIGN N_VARIABLE");
         hasSign = sign(lex, currentToken);
         variableType = variable(lex, currentToken);
+        cout << "VAR TYPE IN FACTOR: " << currentToken[1] << ": " << variableType.type << endl;
         if (hasSign && variableType.type != INT)
         {
           cout << "Line " << currentToken[2] << ": Expression must be of type integer" << endl;
@@ -804,7 +812,8 @@ TYPE_INFO Parser::variable(Lexer &lex, vector<string> &currentToken)
   printRule("N_VARIABLE", "T_IDENT N_IDXVAR");
   if (currentToken[0] == "T_IDENT")
   {
-    TYPE_INFO typeInfo = findEntryInAnyScope(currentToken[1]);
+    typeInfo = findEntryInAnyScope(currentToken[1]);
+    cout << "VAR TYPE IN VAR " << currentToken[1] << ": " << typeInfo.type << endl;
     if (typeInfo.type == UNDEFINED)
       printError(currentToken, UNDEFINED_IDENT);
     if (typeInfo.type == PROCEDURE)
@@ -824,6 +833,7 @@ TYPE_INFO Parser::variable(Lexer &lex, vector<string> &currentToken)
     }
   }
   else syntaxError(currentToken);
+  cout << "VAR TYPE IN VAR " << currentToken[1] << ": " << typeInfo.type << endl;
   return typeInfo;
 }
 
@@ -879,13 +889,16 @@ TYPE_INFO Parser::constant(Lexer &lex, vector<string> &currentToken)
 
 TYPE_INFO Parser::boolConst(Lexer &lex, vector<string> &currentToken) 
 {
+  TYPE_INFO returnType;
   if ((currentToken[0] == "T_TRUE") ||
       (currentToken[0] == "T_FALSE"))
   {
     printRule("N_BOOLCONST", currentToken[0]);  
     currentToken = lex.getToken();
+    returnType.type = BOOL;
   }
   else syntaxError(currentToken);
+  return returnType;
 }
 
 void Parser::beginScope() 
