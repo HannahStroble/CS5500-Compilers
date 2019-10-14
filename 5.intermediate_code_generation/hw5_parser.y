@@ -39,8 +39,7 @@ typedef vector<int> SUBSCRIPT_INFO;
 map<char, SUBSCRIPT_INFO> symbolTable;
 SUBSCRIPT_INFO currentSubscriptInfo;  
 
-void addEntryToSymbolTable(const char id, 
-                           const SUBSCRIPT_INFO subscriptInfo);
+void addEntryToSymbolTable(const char id, const SUBSCRIPT_INFO subscriptInfo);
 SUBSCRIPT_INFO findEntryInSymbolTable(const char id);
 void outputSubscriptInfo(const SUBSCRIPT_INFO v);
 void printTypeInfo(const char ch, const SUBSCRIPT_INFO s);
@@ -92,164 +91,186 @@ extern "C"
 %%
 P	: T_VAR V T_LCURLY C T_RCURLY
 	{
-	prRule("P", "var V { C }");
-	if (DEBUG) printf("\n---- Completed parsing ----\n\n");
+		prRule("P", "var V { C }");
+		if (DEBUG) printf("\n---- Completed parsing ----\n\n");
 	}
 	;
+
+
 V   : /* epsilon */
 	{
-	prRule("V", "epsilon");
+		prRule("V", "epsilon");
 	}
 	| T_IDENT N T_SEMICOL
 	{
-	addEntryToSymbolTable($1, currentSubscriptInfo);
-	currentSubscriptInfo.clear( );
+		addEntryToSymbolTable($1, currentSubscriptInfo);
+		currentSubscriptInfo.clear( );
 	}
 	V
 	{
-	prRule("V", "id N ; V");
+		prRule("V", "id N ; V");
 	}
 	;
+
+
 N	: T_LBRACK T_INTCONST T_RBRACK N
 	{
-	prRule("N", "[ INTCONST ] N");
-	currentSubscriptInfo.insert(currentSubscriptInfo.begin(),
-                                 $2);
+		prRule("N", "[ INTCONST ] N");
+		currentSubscriptInfo.insert(currentSubscriptInfo.begin(), $2);
 	}
 	| /* epsilon */
 	{
-	prRule("N", "epsilon");
+		prRule("N", "epsilon");
 	}
 	;
+
+
 C	: S T_SEMICOL C
 	{
-	prRule("C", "S ; C");
+		prRule("C", "S ; C");
 	}
 	| /* epsilon */
 	{
-	prRule("C", "epsilon");
+		prRule("C", "epsilon");
 	}
 	;
+
+
 S	: A
 	{
-	prRule("S", "A ;");
+		prRule("S", "A ;");
 	}
 	| F
 	{
-	prRule("S", "F");
+		prRule("S", "F");
 	}
 	| W
 	{
-	prRule("S", "W");
+		prRule("S", "W");
 	}
-	;  
+	;
+
+
 A	: T_IDENT T_ASSIGN E
 	{
-	prRule("A", "id = E");
-	SUBSCRIPT_INFO s = findEntryInSymbolTable($1);
-	if (DEBUG) 
-	{
-	  printf("\n*** Found %c in symbol table\n", $1);
-   	  if (s.size() > 0) 
-	  {
- 	  printf("*** This array has the following ");
-	  printf("subscriptInfo:\n");
-	  outputSubscriptInfo(s);
-  	  }
- 	  printf("\n");
-	}
+		prRule("A", "id = E");
+		SUBSCRIPT_INFO s = findEntryInSymbolTable($1);
+		if (DEBUG) 
+		{
+	  		printf("\n*** Found %c in symbol table\n", $1);
+   	  		if (s.size() > 0) 
+	  		{
+ 	  			printf("*** This array has the following ");
+	  			printf("subscriptInfo:\n");
+	  			outputSubscriptInfo(s);
+  	  		}
+ 	  		printf("\n");
+		}
 	}
 	| L T_ASSIGN E
 	{
-	prRule("A", "L = E");
+		prRule("A", "L = E");
 	}
 	;
+
+
 F	: T_IF T_LPAREN B T_RPAREN T_THEN S T_ELSE S
 	{
-	prRule("F", "if ( B ) then S else S");
-	}
-	; 
-W	: T_WHILE T_LPAREN B T_RPAREN S
-	{
-	prRule("S", "while ( B ) S");
+		prRule("F", "if ( B ) then S else S");
 	}
 	;
+
+
+W	: T_WHILE T_LPAREN B T_RPAREN S
+	{
+		prRule("S", "while ( B ) S");
+	}
+	;
+
+
 E	: E T_PLUS T_INTCONST
 	{
-	prRule("E", "E + INTCONST");
+		prRule("E", "E + INTCONST");
 	}
 	| T_IDENT
 	{
-	prRule("E", "id");
+		prRule("E", "id");
 	}
 	| L
 	{
-	prRule("E", "L");
+		prRule("E", "L");
 	}
 	| T_INTCONST
 	{
-	prRule("E", "INTCONST");
+		prRule("E", "INTCONST");
 	}
 	;
+
 L	: T_IDENT T_LBRACK E T_RBRACK
   	{
-	prRule("L", "id [ E ]");
-	SUBSCRIPT_INFO s = findEntryInSymbolTable($1);
-	if (DEBUG) 
-	{
-  	  printf("\n*** Found %c in symbol table\n", $1);
-   	  if (s.size() > 0) 
-	  {
-	  printf("*** This array has the following ");
-	  printf("subscriptInfo:\n");
-	  outputSubscriptInfo(s);
- 	  }
-	  printf("\n");
-  	}
+		prRule("L", "id [ E ]");
+		SUBSCRIPT_INFO s = findEntryInSymbolTable($1);
+		if (DEBUG) 
+		{
+  		  printf("\n*** Found %c in symbol table\n", $1);
+   		  if (s.size() > 0) 
+		  {
+			  printf("*** This array has the following ");
+			  printf("subscriptInfo:\n");
+			  outputSubscriptInfo(s);
+ 		  }
+		  printf("\n");
+  		}
 	}
 	| L T_LBRACK E T_RBRACK
 	{
-	prRule("L", "L [ E ]");
+		prRule("L", "L [ E ]");
 	}
 	;
+
+
 B	: E R E
-     	{
-	prRule("B", "E R E");
+    {
+		prRule("B", "E R E");
 	}
 	| T_TRUE
    	{
-	prRule("B", "true");
+		prRule("B", "true");
 	}
 	| T_FALSE
    	{
-	prRule("B", "false");
+		prRule("B", "false");
 	}
-	;                              
+	;
+
+
 R	: T_GT
 	{
-	prRule("R", ">");
+		prRule("R", ">");
 	}
      	| T_LT
 	{
-	prRule("R", "<");
+		prRule("R", "<");
 	}
      	| T_NE
 	{
-	prRule("R", "!=");
+		prRule("R", "!=");
 	}
 	| T_GE
 	{
-	prRule("R", ">=");
+		prRule("R", ">=");
 	}
     	| T_LE
 	{
-	prRule("R", "<=");
+		prRule("R", "<=");
 	}
      	| T_EQ
 	{
-	prRule("R", "==");
+		prRule("R", "==");
 	}
 	;
+
+
 %%
 
 #include "lex.yy.c"
