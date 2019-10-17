@@ -10,7 +10,7 @@ test: driver
 	@./driver < input.ext
 
 driver: lex.yy.c hw5_parser.tab.c
-	@echo "Compiling tab..."
+	@echo "Compilinged"
 	@g++ hw5_parser.tab.c -o driver
 	@echo "DING! Bisquits are done!"
 
