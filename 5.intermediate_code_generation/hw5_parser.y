@@ -25,12 +25,14 @@
 #include <vector>
 #include <map>
 #include <cstring>
+#include <algorithm>
 using namespace std;
 
 
 int lineNum = 1; 
-
-bool DEBUG  = true;   // if true, outputs tokens, productions,
+int globLabelCt = 1;
+int globTempCt = 1;
+bool DEBUG  = false;   // if true, outputs tokens, productions,
                       // symbol table entries, etc.
 
 
@@ -38,6 +40,10 @@ typedef vector<int> SUBSCRIPT_INFO;
 
 map<char, SUBSCRIPT_INFO> symbolTable;
 SUBSCRIPT_INFO currentSubscriptInfo;  
+
+std::vector<string> opVector;
+std::vector<string> opScratch;
+
 
 void addEntryToSymbolTable(const char id, const SUBSCRIPT_INFO subscriptInfo);
 SUBSCRIPT_INFO findEntryInSymbolTable(const char id);
@@ -153,6 +159,8 @@ S	: A
 
 A	: T_IDENT T_ASSIGN E
 	{
+		opScratch.push_back(" = ");
+		opScratch.push_back( string (1,$1));
 		prRule("A", "id = E");
 		SUBSCRIPT_INFO s = findEntryInSymbolTable($1);
 		if (DEBUG) 
@@ -168,7 +176,7 @@ A	: T_IDENT T_ASSIGN E
 		}
 	}
 	| L T_ASSIGN E
-	{
+	{	
 		prRule("A", "L = E");
 	}
 	;
@@ -194,6 +202,8 @@ E	: E T_PLUS T_INTCONST
 	}
 	| T_IDENT
 	{
+		
+		opScratch.push_back(string (1,$1));
 		prRule("E", "id");
 	}
 	| L
@@ -202,6 +212,7 @@ E	: E T_PLUS T_INTCONST
 	}
 	| T_INTCONST
 	{
+		opScratch.push_back(to_string($1));
 		prRule("E", "INTCONST");
 	}
 	;
@@ -348,6 +359,18 @@ int main( )
 
   // Output list of 3-address instructions
   // YOU NEED TO DO THIS!!!
-
+  reverse(opScratch.begin(), opScratch.end());
+  while(!opScratch.empty())
+  {
+  	//Unroll for loop, always work in threes
+  	string t1, t2, t3;
+  	t1 = opScratch.back(); 
+  	opScratch.pop_back();
+  	t2 = opScratch.back(); 
+  	opScratch.pop_back();
+  	t3 = opScratch.back(); 
+  	opScratch.pop_back();
+  	cout << t3 << t2 << t1 << endl;
+  }
   return 0;
 }
