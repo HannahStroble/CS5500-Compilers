@@ -1,8 +1,8 @@
 /*
       hw5_parser.y
 
- 	Bison specification file for the HW #5 language.
- 	CS 5500, Fall 2019.
+    Bison specification file for the HW #5 language.
+    CS 5500, Fall 2019.
 
       To create the executable:
 
@@ -17,7 +17,7 @@
 */
 
 /*
- *	Declaration section.
+ *  Declaration section.
  */
 %{
 #include <stdio.h>
@@ -28,12 +28,39 @@
 #include <algorithm>
 using namespace std;
 
+#define OPCODE_PL 1
+#define OPCODE_EQ 2
+#define OPCODE_NE 3
+#define OPCODE_LE 4
+#define OPCODE_GE 5
+#define OPCODE_LT 6
+#define OPCODE_GT 7
+#define OPCODE_ST 8
+#define OPCODE_GO 9
+#define OPCODE_IL 10
+#define OPCODE_IR 11
+#define OPCODE_LB 12
+#define OPCODE_IF 13
+#define OPCODE_AS 14
 
 int lineNum = 1; 
 int globLabelCt = 1;
 int globTempCt = 1;
-bool DEBUG  = false;   // if true, outputs tokens, productions,
-                      // symbol table entries, etc.
+bool DEBUG  = true;    // if true, outputs tokens, productions,
+                        // symbol table entries, etc.
+
+typedef char cstr[5]; //need to typedef to make the union happy
+                      //maximum of five character per op section [TRUE\0]
+                      //will tweak as needed
+typedef struct
+{
+  int code;       //operation
+  cstr a1;        //arg 1
+  cstr a2;        //arg 2 (optional)
+  cstr dest;      //destination
+  cstr arrayBase; //Points to array base
+  int arrayType;
+} instruction;
 
 
 typedef vector<int> SUBSCRIPT_INFO;
@@ -71,10 +98,12 @@ extern "C"
 %union {
   char ch;
   int num;
+  instruction ins;
+  cstr str;
 };
 
 /*
- *	Token declarations
+ *  Token declarations
 */
 %token  T_LPAREN T_RPAREN T_LBRACK T_RBRACK
 %token  T_SEMICOL T_PLUS T_ASSIGN
@@ -85,207 +114,277 @@ extern "C"
 
 %type <num> T_INTCONST R
 %type <ch> T_IDENT
+%type <ins> E L B
 
 /*
- *	Starting point.
+ *  Starting point.
  */
-%start		P
+%start      P
 
 /*
- *	Translation rules.
+ *  Translation rules.
  */
 %%
-P	: T_VAR V T_LCURLY C T_RCURLY
-	{
-		prRule("P", "var V { C }");
-		if (DEBUG) printf("\n---- Completed parsing ----\n\n");
-	}
-	;
+P   : T_VAR V T_LCURLY C T_RCURLY
+    {
+        prRule("P", "var V { C }");
+        if (DEBUG) printf("\n---- Completed parsing ----\n\n");
+    }
+    ;
 
 
 V   : /* epsilon */
-	{
-		prRule("V", "epsilon");
-	}
-	| T_IDENT N T_SEMICOL
-	{
-		addEntryToSymbolTable($1, currentSubscriptInfo);
-		currentSubscriptInfo.clear( );
-	}
-	V
-	{
-		prRule("V", "id N ; V");
-	}
-	;
-
-
-N	: T_LBRACK T_INTCONST T_RBRACK N
-	{
-		prRule("N", "[ INTCONST ] N");
-		currentSubscriptInfo.insert(currentSubscriptInfo.begin(), $2);
-	}
-	| /* epsilon */
-	{
-		prRule("N", "epsilon");
-	}
-	;
-
-
-C	: S T_SEMICOL C
-	{
-		prRule("C", "S ; C");
-	}
-	| /* epsilon */
-	{
-		prRule("C", "epsilon");
-	}
-	;
-
-
-S	: A
-	{
-		prRule("S", "A ;");
-	}
-	| F
-	{
-		prRule("S", "F");
-	}
-	| W
-	{
-		prRule("S", "W");
-	}
-	;
-
-
-A	: T_IDENT T_ASSIGN E
-	{
-		opScratch.push_back(" = ");
-		opScratch.push_back( string (1,$1));
-		prRule("A", "id = E");
-		SUBSCRIPT_INFO s = findEntryInSymbolTable($1);
-		if (DEBUG) 
-		{
-	  		printf("\n*** Found %c in symbol table\n", $1);
-   	  		if (s.size() > 0) 
-	  		{
- 	  			printf("*** This array has the following ");
-	  			printf("subscriptInfo:\n");
-	  			outputSubscriptInfo(s);
-  	  		}
- 	  		printf("\n");
-		}
-	}
-	| L T_ASSIGN E
-	{	
-		prRule("A", "L = E");
-	}
-	;
-
-
-F	: T_IF T_LPAREN B T_RPAREN T_THEN S T_ELSE S
-	{
-		prRule("F", "if ( B ) then S else S");
-	}
-	;
-
-
-W	: T_WHILE T_LPAREN B T_RPAREN S
-	{
-		prRule("S", "while ( B ) S");
-	}
-	;
-
-
-E	: E T_PLUS T_INTCONST
-	{
-		prRule("E", "E + INTCONST");
-	}
-	| T_IDENT
-	{
-		
-		opScratch.push_back(string (1,$1));
-		prRule("E", "id");
-	}
-	| L
-	{
-		prRule("E", "L");
-	}
-	| T_INTCONST
-	{
-		opScratch.push_back(to_string($1));
-		prRule("E", "INTCONST");
-	}
-	;
-
-L	: T_IDENT T_LBRACK E T_RBRACK
-  	{
-		prRule("L", "id [ E ]");
-		SUBSCRIPT_INFO s = findEntryInSymbolTable($1);
-		if (DEBUG) 
-		{
-  		  printf("\n*** Found %c in symbol table\n", $1);
-   		  if (s.size() > 0) 
-		  {
-			  printf("*** This array has the following ");
-			  printf("subscriptInfo:\n");
-			  outputSubscriptInfo(s);
- 		  }
-		  printf("\n");
-  		}
-	}
-	| L T_LBRACK E T_RBRACK
-	{
-		prRule("L", "L [ E ]");
-	}
-	;
-
-
-B	: E R E
     {
-		prRule("B", "E R E");
-	}
-	| T_TRUE
-   	{
-		prRule("B", "true");
-	}
-	| T_FALSE
-   	{
-		prRule("B", "false");
-	}
-	;
+        prRule("V", "epsilon");
+    }
+    | T_IDENT N T_SEMICOL
+    {
+        addEntryToSymbolTable($1, currentSubscriptInfo);
+        currentSubscriptInfo.clear( );
+    }
+    V
+    {
+        prRule("V", "id N ; V");
+    }
+    ;
 
 
-R	: T_GT
-	{
-		prRule("R", ">");
-	}
-     	| T_LT
-	{
-		prRule("R", "<");
-	}
-     	| T_NE
-	{
-		prRule("R", "!=");
-	}
-	| T_GE
-	{
-		prRule("R", ">=");
-	}
-    	| T_LE
-	{
-		prRule("R", "<=");
-	}
-     	| T_EQ
-	{
-		prRule("R", "==");
-	}
-	;
+N   : T_LBRACK T_INTCONST T_RBRACK N
+    {
+        prRule("N", "[ INTCONST ] N");
+        currentSubscriptInfo.insert(currentSubscriptInfo.begin(), $2);
+    }
+    | /* epsilon */
+    {
+        prRule("N", "epsilon");
+    }
+    ;
+
+
+C   : S T_SEMICOL C
+    {
+        prRule("C", "S ; C");
+    }
+    | /* epsilon */
+    {
+        prRule("C", "epsilon");
+    }
+    ;
+
+
+S   : A
+    {
+        prRule("S", "A ;");
+    }
+    | F
+    {
+        prRule("S", "F");
+    }
+    | W
+    {
+        prRule("S", "W");
+    }
+    ;
+
+
+A   : T_IDENT T_ASSIGN E
+    {
+        opScratch.push_back(" = ");
+        opScratch.push_back( string (1,$1));
+        prRule("A", "id = E");
+        SUBSCRIPT_INFO s = findEntryInSymbolTable($1);
+        if (DEBUG) 
+        {
+            printf("\n*** Found %c in symbol table\n", $1);
+            if (s.size() > 0) 
+            {
+                printf("*** This array has the following ");
+                printf("subscriptInfo:\n");
+                outputSubscriptInfo(s);
+            }
+            printf("\n");
+        }
+        //instruction tmp
+        //tmp.code = OPCODE_AS
+        //tmp.dest = IDENT.result (IDENT = $1?) 
+        //tmp.a1 = E.result(E = $3?)
+        //add tmp
+    }
+    | L T_ASSIGN E
+    {   
+        prRule("A", "L = E");
+        //instruction tmp
+        //tmp.code = OPCODE_IL
+        //tmp.dest = L.arrayBase <- this is the x part of x[y]
+        //tmp.a1 = L.a1  <- the y part of ^^^
+        //tmp.a2 = $3.dest <- this would beter be called result or something?
+        //add tmp
+    }
+    ;
+
+
+F   : T_IF T_LPAREN B T_RPAREN
+    {
+      prRule("F", "if ( B ) then S else S");
+      printf("B1\n");
+    }
+    T_THEN //break out to execute code between blocks
+    {
+      printf("B2\n");
+    }
+    S T_ELSE //break out to execute code between blocks 
+    {
+      printf("B3\n");
+    }
+    S //break out to execute code between blocks
+    {
+      printf("B4\n");
+    }
+    ;
+
+
+W   : T_WHILE T_LPAREN B T_RPAREN S
+    {
+        prRule("S", "while ( B ) S");
+    }
+    ;
+
+
+E   : E T_PLUS T_INTCONST
+    {
+        prRule("E", "E + INTCONST");
+    }
+    | T_IDENT
+    {
+        
+        opScratch.push_back(string (1,$1));
+        prRule("E", "id");
+    }
+    | L
+    {
+        prRule("E", "L");
+    }
+    | T_INTCONST
+    {
+        opScratch.push_back(to_string($1));
+        prRule("E", "INTCONST");
+    }
+    ;
+
+L   : T_IDENT T_LBRACK E T_RBRACK
+    {
+        prRule("L", "id [ E ]");
+        SUBSCRIPT_INFO s = findEntryInSymbolTable($1);
+        if (DEBUG) 
+        {
+          printf("\n*** Found %c in symbol table\n", $1);
+          if (s.size() > 0) 
+          {
+              printf("*** This array has the following ");
+              printf("subscriptInfo:\n");
+              outputSubscriptInfo(s);
+          }
+          printf("\n");
+        }
+    }
+    | L T_LBRACK E T_RBRACK
+    {
+        prRule("L", "L [ E ]");
+    }
+    ;
+
+
+B   : E R E
+    {
+        prRule("B", "E R E");
+    }
+    | T_TRUE
+    {
+        prRule("B", "true");
+    }
+    | T_FALSE
+    {
+        prRule("B", "false");
+    }
+    ;
+
+
+R   : T_GT
+    {
+        prRule("R", ">");
+    }
+        | T_LT
+    {
+        prRule("R", "<");
+    }
+        | T_NE
+    {
+        prRule("R", "!=");
+    }
+    | T_GE
+    {
+        prRule("R", ">=");
+    }
+        | T_LE
+    {
+        prRule("R", "<=");
+    }
+        | T_EQ
+    {
+        prRule("R", "==");
+    }
+    ;
 
 
 %%
 
 #include "lex.yy.c"
 extern FILE *yyin;
+
+void printIns(instruction in)
+{
+  cstr tmpOp;
+  if      (in.code == OPCODE_PL) {strcpy(tmpOp, "+"  );}
+  else if (in.code == OPCODE_EQ) {strcpy(tmpOp, "==" );}
+  else if (in.code == OPCODE_NE) {strcpy(tmpOp, "!=" );}
+  else if (in.code == OPCODE_LE) {strcpy(tmpOp, "<=" );}
+  else if (in.code == OPCODE_GE) {strcpy(tmpOp, ">=" );}
+  else if (in.code == OPCODE_LT) {strcpy(tmpOp, "<"  );}
+  else if (in.code == OPCODE_GT) {strcpy(tmpOp, ">"  );}
+  else if (in.code == OPCODE_ST) {strcpy(tmpOp, "*"  );}
+  else                           {strcpy(tmpOp, ""   );}
+
+  //special cases
+  if(in.code == OPCODE_GO) //GOTO
+  {
+    printf("goto %s\n", in.dest);
+  }
+  else if(in.code == OPCODE_IL) //Index on L
+  {
+    printf("%s[%s] = %s\n", in.dest, in.a1, in.a2);
+  }
+  else if(in.code == OPCODE_IR) //Index on R
+  {
+    printf("%s = %s[%s]\n", in.dest, in.a1, in.a2);
+  }
+  else if(in.code == OPCODE_LB) //Label
+  {
+    printf("%s:\n", in.dest);
+  }
+  else if(in.code == OPCODE_IF) //FJMP
+  {
+    printf("if %s == false goto %s\n", in.a1, in.a2);
+  }
+  else if(in.code == OPCODE_AS) //normal op
+  {
+    printf("%s = %s\n", in.dest, in.a1);
+  }
+  else //normal op
+  {
+    printf("%s = %s %s %s\n", in.dest, in.a1, tmpOp, in.a2);
+  }
+  return;
+}
 
 void prRule(const char* lhs, const char* rhs) 
 {
@@ -353,8 +452,45 @@ void printTypeInfo(const char ch, const SUBSCRIPT_INFO s)
 int main( ) 
 {
   // Parse until end-of-file
+  instruction x;
+  char tz[] = "z";
+  char tx[] = "x";
+  char ty[] = "y";
+  strcpy(x.dest, tz);
+  strcpy(x.a1, tx);
+  strcpy(x.a2, ty);
+
+  x.code = OPCODE_AS;
+  printIns(x);
+  x.code = OPCODE_PL;
+  printIns(x);
+  x.code = OPCODE_EQ;
+  printIns(x);
+  x.code = OPCODE_NE;
+  printIns(x);
+  x.code = OPCODE_LE;
+  printIns(x);
+  x.code = OPCODE_GE;
+  printIns(x);
+  x.code = OPCODE_LT;
+  printIns(x);
+  x.code = OPCODE_GT;
+  printIns(x);
+  x.code = OPCODE_ST;
+  printIns(x);
+  x.code = OPCODE_GO;
+  printIns(x);
+  x.code = OPCODE_IL;
+  printIns(x);
+  x.code = OPCODE_IR;
+  printIns(x);
+  x.code = OPCODE_LB;
+  printIns(x);
+  x.code = OPCODE_IF;
+  printIns(x);
+
   do {
-	yyparse();
+    yyparse();
   } while (!feof(yyin));
 
   // Output list of 3-address instructions
@@ -362,15 +498,15 @@ int main( )
   reverse(opScratch.begin(), opScratch.end());
   while(!opScratch.empty())
   {
-  	//Unroll for loop, always work in threes
-  	string t1, t2, t3;
-  	t1 = opScratch.back(); 
-  	opScratch.pop_back();
-  	t2 = opScratch.back(); 
-  	opScratch.pop_back();
-  	t3 = opScratch.back(); 
-  	opScratch.pop_back();
-  	cout << t3 << t2 << t1 << endl;
+    //Unroll for loop, always work in threes
+    string t1, t2, t3;
+    t1 = opScratch.back(); 
+    opScratch.pop_back();
+    t2 = opScratch.back(); 
+    opScratch.pop_back();
+    t3 = opScratch.back(); 
+    opScratch.pop_back();
+    cout << t3 << t2 << t1 << endl;
   }
   return 0;
 }
