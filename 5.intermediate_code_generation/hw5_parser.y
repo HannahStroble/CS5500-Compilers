@@ -36,7 +36,6 @@
 **                           **
 *******************************/
 
-
 /*
  *  Declaration section.
  */
@@ -69,7 +68,8 @@ using namespace std;
 int lineNum = 1; 
 int globLabelCt = 1;
 int globTempCt = 1;
-bool DEBUG  = true;    // if true, outputs tokens, productions,
+bool DEBUG  = false;
+bool INS_DEBUG = false;  // if true, outputs tokens, productions,
                         // symbol table entries, etc.
 
 typedef char cstr[5]; //need to typedef to make the union happy
@@ -241,6 +241,7 @@ A   : T_IDENT T_ASSIGN E
     {   
         prRule("A", "L = E");
         instruction ins;
+        strcpy(ins.addr, $1.arrayBase);
         strcpy(ins.a1, $1.a1); //get whatever L end up being
         strcpy(ins.a2, $3.addr); //set L to result of E
         ins.code = OPCODE_IL;
@@ -352,6 +353,7 @@ E   : E T_PLUS T_INTCONST
     {
         prRule("E", "id");
         SUBSCRIPT_INFO subInfo;
+        subInfo = findEntryInSymbolTable($1);
         sprintf($$.addr, "%c", $1); //Get the id name
         $$.code = OPCODE_AS;
     }
@@ -366,7 +368,7 @@ E   : E T_PLUS T_INTCONST
         strcpy($$.a2, $1.a2);
         strcpy(ins.addr, tmp);
         strcpy(ins.a1, $1.arrayBase); //get the base name of array to compute
-        strcpy($$.a2, $1.a2);
+        strcpy(ins.a2, $1.a2);
         $$.code = OPCODE_IR; //return with right hand side
         ins.code = OPCODE_IR; //op with left hand index
         addIns(ins);
@@ -431,23 +433,23 @@ L   : T_IDENT T_LBRACK E T_RBRACK
         SUBSCRIPT_INFO subInfo;
         cstr tmp;
 
-        
         sprintf(tmp, "t%d", genTemp());
         strcpy(ins1.addr, tmp);
-        strcpy(ins2.a1, tmp);
+        strcpy(ins2.a2, tmp);
 
         sprintf(tmp, "t%d", genTemp());
-        strcpy(ins2.addr, tmp);
         strcpy($$.addr, tmp);
         strcpy($$.a1, tmp);
+        strcpy($$.a2, tmp);
+        $$.code = OPCODE_AS;
         
+        strcpy(ins2.addr, tmp);
         strcpy(ins2.a1, $1.addr);
         ins2.code = OPCODE_PL;
         
         strcpy(ins1.a1, $3.addr);
         ins1.code = OPCODE_ST;
-        strcpy($$.a2, tmp);
-        $$.code = OPCODE_AS;
+
         
         //L.type = L1.type
         strcpy($$.arrayBase, $1.arrayBase);
@@ -543,7 +545,7 @@ int genLabel()
 void addIns(instruction in)
 {
     iVector.push_back(in);
-    if(DEBUG)
+    if(INS_DEBUG)
     {
         printf("Added: ");
         printIns(in);
@@ -584,7 +586,7 @@ void printIns(instruction in)
   }
   else if(in.code == OPCODE_IF) //FJMP
   {
-    printf("if %s == false goto %s\n", in.a1, in.a2);
+    printf("if %s == false goto %s\n", in.a1, in.addr);
   }
   else if(in.code == OPCODE_AS) //normal op
   {
@@ -663,11 +665,11 @@ void printTypeInfo(const char ch, const SUBSCRIPT_INFO s)
 int arrWidth(SUBSCRIPT_INFO sub, int start)
 {
     int width = 1;
-    for(auto &i : sub)
+    for(int i = start; i < sub.size(); i++)
     {
-        width = width * i;
+        width *= sub[i];
     }
-    return width * INT_WIDTH;
+    return (width * INT_WIDTH);
 }
 
 int main( ) 
