@@ -16,6 +16,27 @@
 
 */
 
+/******************************
+**  _  _  ___ _____ ___ ___  **
+** | \| |/ _ \_   _| __/ __| **
+** | .` | (_) || | | _|\__ \ **
+** |_|\_|\___/ |_| |___|___/ **
+**                           **
+** $$ is left side of rules  **
+**    (it is also autotyped) **
+**                           **
+** $n is nth right side rule **
+**                           **
+** R | A {1} B {2} C {3}     **
+**    will do A              **
+**    then {1}               **
+**    then B, etc            **
+**                           **
+** $<type>n is nth as type   **
+**                           **
+*******************************/
+
+
 /*
  *  Declaration section.
  */
@@ -43,6 +64,8 @@ using namespace std;
 #define OPCODE_IF 13
 #define OPCODE_AS 14
 
+#define INT_WIDTH 4
+
 int lineNum = 1; 
 int globLabelCt = 1;
 int globTempCt = 1;
@@ -57,10 +80,12 @@ typedef struct
   int code;       //operation
   cstr a1;        //arg 1
   cstr a2;        //arg 2 (optional)
-  cstr dest;      //destination
+  cstr addr;      //destination
   cstr arrayBase; //Points to array base
-  int arrayType;
+  int arrayNumIdx;
 } instruction;
+
+vector<instruction> iVector;
 
 
 typedef vector<int> SUBSCRIPT_INFO;
@@ -68,8 +93,11 @@ typedef vector<int> SUBSCRIPT_INFO;
 map<char, SUBSCRIPT_INFO> symbolTable;
 SUBSCRIPT_INFO currentSubscriptInfo;  
 
-std::vector<string> opVector;
-std::vector<string> opScratch;
+int arrWidth(SUBSCRIPT_INFO sub, int start);
+void printIns(instruction in);
+void addIns(instruction in);
+int genLabel();
+int genTemp();
 
 
 void addEntryToSymbolTable(const char id, const SUBSCRIPT_INFO subscriptInfo);
@@ -99,7 +127,7 @@ extern "C"
   char ch;
   int num;
   instruction ins;
-  cstr str;
+  cstr strUnion;
 };
 
 /*
@@ -189,36 +217,34 @@ S   : A
 
 A   : T_IDENT T_ASSIGN E
     {
-        opScratch.push_back(" = ");
-        opScratch.push_back( string (1,$1));
         prRule("A", "id = E");
-        SUBSCRIPT_INFO s = findEntryInSymbolTable($1);
+        instruction ins;
+        SUBSCRIPT_INFO subInfo= findEntryInSymbolTable($1);
+        sprintf(ins.addr, "%c", $1); //save to ID
+        strcpy(ins.a1, $3.addr); //set it to whatever E is
+        ins.code = OPCODE_AS;
+        addIns(ins);
+
         if (DEBUG) 
         {
             printf("\n*** Found %c in symbol table\n", $1);
-            if (s.size() > 0) 
+            if (subInfo.size() > 0) 
             {
                 printf("*** This array has the following ");
                 printf("subscriptInfo:\n");
-                outputSubscriptInfo(s);
+                outputSubscriptInfo(subInfo);
             }
             printf("\n");
         }
-        //instruction tmp
-        //tmp.code = OPCODE_AS
-        //tmp.dest = IDENT.result (IDENT = $1?) 
-        //tmp.a1 = E.result(E = $3?)
-        //add tmp
     }
     | L T_ASSIGN E
     {   
         prRule("A", "L = E");
-        //instruction tmp
-        //tmp.code = OPCODE_IL
-        //tmp.dest = L.arrayBase <- this is the x part of x[y]
-        //tmp.a1 = L.a1  <- the y part of ^^^
-        //tmp.a2 = $3.dest <- this would beter be called result or something?
-        //add tmp
+        instruction ins;
+        strcpy(ins.a1, $1.a1); //get whatever L end up being
+        strcpy(ins.a2, $3.addr); //set L to result of E
+        ins.code = OPCODE_IL;
+        addIns(ins);
     }
     ;
 
@@ -226,26 +252,73 @@ A   : T_IDENT T_ASSIGN E
 F   : T_IF T_LPAREN B T_RPAREN
     {
       prRule("F", "if ( B ) then S else S");
-      printf("B1\n");
+      instruction ins;
+      cstr tmp;
+      sprintf(tmp, "L%d", genLabel());
+      strcpy(ins.addr, tmp);
+      strcpy($<strUnion>$, tmp); //gotta specify or bison gets angry
+      strcpy(ins.a1, $3.addr); //get B results
+      ins.code = OPCODE_IF;
+      addIns(ins);
     }
     T_THEN //break out to execute code between blocks
     {
-      printf("B2\n");
+      sprintf($<strUnion>$, "L%d", genLabel()); //pass the label name back up the tree
     }
     S T_ELSE //break out to execute code between blocks 
     {
-      printf("B3\n");
+      instruction ins1, ins2;
+      strcpy(ins1.addr, $<strUnion>7); //$7 is our final state of S
+      ins1.code = OPCODE_GO;
+      addIns(ins1);
+
+      strcpy(ins2.addr, $<strUnion>5); //grab that label from T_THEM
+      ins2.code = OPCODE_LB;
+      addIns(ins2);
     }
     S //break out to execute code between blocks
     {
-      printf("B4\n");
+      instruction ins;
+      strcpy(ins.addr, $<strUnion>7); //label at start of S
+      ins.code = OPCODE_LB;
+      addIns(ins);
     }
     ;
 
 
-W   : T_WHILE T_LPAREN B T_RPAREN S
+W   : T_WHILE T_LPAREN
     {
-        prRule("S", "while ( B ) S");
+      prRule("S", "while ( B ) S");
+      instruction ins;
+      cstr tmp;
+      sprintf(tmp, "L%d", genLabel());
+      strcpy($<strUnion>$, tmp); //pass label back up the stack
+      strcpy(ins.addr, tmp);
+      ins.code = OPCODE_LB;
+      addIns(ins);
+    }
+    B 
+    {
+      instruction ins;
+      cstr tmp;
+      sprintf(tmp, "L%d", genLabel());
+      strcpy($<strUnion>$, tmp); //pass the label back up
+      strcpy(ins.addr, tmp);
+      strcpy(ins.a1, $4.addr); //whatever S engs up being
+      ins.code = OPCODE_IF;
+      addIns(ins);
+    }
+    T_RPAREN S
+    {
+      instruction ins1, ins2;
+      
+      strcpy(ins1.addr, $<strUnion>3); //get B label
+      ins1.code = OPCODE_GO;
+      addIns(ins1);
+
+      strcpy(ins2.addr, $<strUnion>5); //get exit label
+      ins2.code = OPCODE_LB;
+      addIns(ins2);
     }
     ;
 
@@ -253,36 +326,100 @@ W   : T_WHILE T_LPAREN B T_RPAREN S
 E   : E T_PLUS T_INTCONST
     {
         prRule("E", "E + INTCONST");
+        instruction ins;
+        cstr tmp;
+
+        sprintf(tmp, "t%d", genTemp());
+        
+        strcpy($$.addr, tmp);
+        strcpy($$.a1, $1.addr);
+
+        strcpy(ins.addr, tmp);
+        strcpy(ins.a1, $1.addr);
+
+        sprintf(tmp, "%d", $3); //Get the const as a string;
+        
+        strcpy($$.a2, tmp);
+        $$.code = OPCODE_PL;
+
+        strcpy(ins.a2, tmp);
+        ins.code = OPCODE_PL;
+
+        addIns(ins);
+
     }
     | T_IDENT
     {
-        
-        opScratch.push_back(string (1,$1));
         prRule("E", "id");
+        SUBSCRIPT_INFO subInfo;
+        sprintf($$.addr, "%c", $1); //Get the id name
+        $$.code = OPCODE_AS;
     }
     | L
     {
         prRule("E", "L");
+        instruction ins;
+        cstr tmp;
+        sprintf(tmp, "t%d", genTemp()); // make a temp
+        strcpy($$.addr, tmp); //Tell anything using this to get the temp holding the result
+        strcpy($$.a1, $1.arrayBase); //get the base name of array to set tmp
+        strcpy($$.a2, $1.a2);
+        strcpy(ins.addr, tmp);
+        strcpy(ins.a1, $1.arrayBase); //get the base name of array to compute
+        strcpy($$.a2, $1.a2);
+        $$.code = OPCODE_IR; //return with right hand side
+        ins.code = OPCODE_IR; //op with left hand index
+        addIns(ins);
+
+
     }
     | T_INTCONST
     {
-        opScratch.push_back(to_string($1));
         prRule("E", "INTCONST");
+        sprintf($$.addr, "%d", $1); //get the const
+        $$.code = OPCODE_AS;
     }
     ;
 
 L   : T_IDENT T_LBRACK E T_RBRACK
     {
         prRule("L", "id [ E ]");
-        SUBSCRIPT_INFO s = findEntryInSymbolTable($1);
+        instruction ins;
+        SUBSCRIPT_INFO subInfo;
+        cstr tmp;
+
+        //id exists? get it!
+        subInfo = findEntryInSymbolTable($1);
+        //stash it's name, two steps because strcpy don't do formatting :(
+        sprintf(tmp, "%c",$1);
+        strcpy($$.arrayBase, tmp);
+        $$.arrayNumIdx = 1; //this is the first idx after the id
+        $$.code = OPCODE_AS;
+
+        sprintf(tmp, "t%d", genTemp());
+        strcpy(ins.addr, tmp); //save to temp
+        
+        strcpy($$.a1, tmp);
+        strcpy($$.a2, tmp); //if anything tries to use this, just give it a tmp handle
+        strcpy($$.addr, tmp);
+
+        sprintf(tmp, "%d", arrWidth(subInfo, 1)); //figure out the array unwind
+        strcpy(ins.a1, $3.addr);
+        strcpy(ins.a2, tmp);
+        ins.code = OPCODE_ST;
+
+        addIns(ins);
+        
+
+        subInfo = findEntryInSymbolTable($1);
         if (DEBUG) 
         {
           printf("\n*** Found %c in symbol table\n", $1);
-          if (s.size() > 0) 
+          if (subInfo.size() > 0) 
           {
               printf("*** This array has the following ");
               printf("subscriptInfo:\n");
-              outputSubscriptInfo(s);
+              outputSubscriptInfo(subInfo);
           }
           printf("\n");
         }
@@ -290,6 +427,37 @@ L   : T_IDENT T_LBRACK E T_RBRACK
     | L T_LBRACK E T_RBRACK
     {
         prRule("L", "L [ E ]");
+        instruction ins1, ins2;
+        SUBSCRIPT_INFO subInfo;
+        cstr tmp;
+
+        
+        sprintf(tmp, "t%d", genTemp());
+        strcpy(ins1.addr, tmp);
+        strcpy(ins2.a1, tmp);
+
+        sprintf(tmp, "t%d", genTemp());
+        strcpy(ins2.addr, tmp);
+        strcpy($$.addr, tmp);
+        strcpy($$.a1, tmp);
+        
+        strcpy(ins2.a1, $1.addr);
+        ins2.code = OPCODE_PL;
+        
+        strcpy(ins1.a1, $3.addr);
+        ins1.code = OPCODE_ST;
+        strcpy($$.a2, tmp);
+        $$.code = OPCODE_AS;
+        
+        //L.type = L1.type
+        strcpy($$.arrayBase, $1.arrayBase);
+        subInfo = findEntryInSymbolTable($1.arrayBase[0]);
+        $$.arrayNumIdx = $1.arrayNumIdx + 1;
+
+        sprintf(tmp, "%d", arrWidth(subInfo,$$.arrayNumIdx));
+        strcpy(ins1.a2, tmp);
+        addIns(ins1);
+        addIns(ins2);
     }
     ;
 
@@ -297,14 +465,29 @@ L   : T_IDENT T_LBRACK E T_RBRACK
 B   : E R E
     {
         prRule("B", "E R E");
+        instruction ins;
+        cstr tmp;
+        //sprintf to format
+        sprintf(tmp, "t%d", genTemp());
+        //We want parent to get the temp we build next
+        strcpy($$.addr, tmp); 
+        //Build our instruction
+        ins.code = $2; //Whatever R is
+        strcpy(ins.addr, tmp); //Save to our new temp friend
+        strcpy(ins.a1, $1.addr); //first E
+        strcpy(ins.a2, $3.addr); //Second E
+        //Add to the vector
+        addIns(ins);
     }
     | T_TRUE
     {
         prRule("B", "true");
+        strcpy($$.addr, "true");
     }
     | T_FALSE
     {
         prRule("B", "false");
+        strcpy($$.addr, "false");
     }
     ;
 
@@ -312,26 +495,32 @@ B   : E R E
 R   : T_GT
     {
         prRule("R", ">");
+        $$ = OPCODE_GT;
     }
         | T_LT
     {
         prRule("R", "<");
+        $$ = OPCODE_LT;
     }
-        | T_NE
+    | T_NE
     {
         prRule("R", "!=");
+        $$ = OPCODE_NE;
     }
     | T_GE
     {
         prRule("R", ">=");
+        $$ = OPCODE_GE;
     }
         | T_LE
     {
         prRule("R", "<=");
+        $$ = OPCODE_LE;
     }
         | T_EQ
     {
         prRule("R", "==");
+        $$ = OPCODE_EQ;
     }
     ;
 
@@ -340,6 +529,28 @@ R   : T_GT
 
 #include "lex.yy.c"
 extern FILE *yyin;
+
+int genTemp()
+{
+    return globTempCt++;
+}
+
+int genLabel()
+{
+    return globLabelCt++;
+}
+
+void addIns(instruction in)
+{
+    iVector.push_back(in);
+    if(DEBUG)
+    {
+        printf("Added: ");
+        printIns(in);
+        printf("\n");
+    }
+    return;
+}
 
 void printIns(instruction in)
 {
@@ -357,19 +568,19 @@ void printIns(instruction in)
   //special cases
   if(in.code == OPCODE_GO) //GOTO
   {
-    printf("goto %s\n", in.dest);
+    printf("goto %s\n", in.addr);
   }
   else if(in.code == OPCODE_IL) //Index on L
   {
-    printf("%s[%s] = %s\n", in.dest, in.a1, in.a2);
+    printf("%s[%s] = %s\n", in.addr, in.a1, in.a2);
   }
   else if(in.code == OPCODE_IR) //Index on R
   {
-    printf("%s = %s[%s]\n", in.dest, in.a1, in.a2);
+    printf("%s = %s[%s]\n", in.addr, in.a1, in.a2);
   }
   else if(in.code == OPCODE_LB) //Label
   {
-    printf("%s:\n", in.dest);
+    printf("%s:\n", in.addr);
   }
   else if(in.code == OPCODE_IF) //FJMP
   {
@@ -377,11 +588,11 @@ void printIns(instruction in)
   }
   else if(in.code == OPCODE_AS) //normal op
   {
-    printf("%s = %s\n", in.dest, in.a1);
+    printf("%s = %s\n", in.addr, in.a1);
   }
   else //normal op
   {
-    printf("%s = %s %s %s\n", in.dest, in.a1, tmpOp, in.a2);
+    printf("%s = %s %s %s\n", in.addr, in.a1, tmpOp, in.a2);
   }
   return;
 }
@@ -449,64 +660,28 @@ void printTypeInfo(const char ch, const SUBSCRIPT_INFO s)
   return;
 }
 
+int arrWidth(SUBSCRIPT_INFO sub, int start)
+{
+    int width = 1;
+    for(auto &i : sub)
+    {
+        width = width * i;
+    }
+    return width * INT_WIDTH;
+}
+
 int main( ) 
 {
   // Parse until end-of-file
-  instruction x;
-  char tz[] = "z";
-  char tx[] = "x";
-  char ty[] = "y";
-  strcpy(x.dest, tz);
-  strcpy(x.a1, tx);
-  strcpy(x.a2, ty);
-
-  x.code = OPCODE_AS;
-  printIns(x);
-  x.code = OPCODE_PL;
-  printIns(x);
-  x.code = OPCODE_EQ;
-  printIns(x);
-  x.code = OPCODE_NE;
-  printIns(x);
-  x.code = OPCODE_LE;
-  printIns(x);
-  x.code = OPCODE_GE;
-  printIns(x);
-  x.code = OPCODE_LT;
-  printIns(x);
-  x.code = OPCODE_GT;
-  printIns(x);
-  x.code = OPCODE_ST;
-  printIns(x);
-  x.code = OPCODE_GO;
-  printIns(x);
-  x.code = OPCODE_IL;
-  printIns(x);
-  x.code = OPCODE_IR;
-  printIns(x);
-  x.code = OPCODE_LB;
-  printIns(x);
-  x.code = OPCODE_IF;
-  printIns(x);
-
-  do {
+ do {
     yyparse();
   } while (!feof(yyin));
 
   // Output list of 3-address instructions
   // YOU NEED TO DO THIS!!!
-  reverse(opScratch.begin(), opScratch.end());
-  while(!opScratch.empty())
-  {
-    //Unroll for loop, always work in threes
-    string t1, t2, t3;
-    t1 = opScratch.back(); 
-    opScratch.pop_back();
-    t2 = opScratch.back(); 
-    opScratch.pop_back();
-    t3 = opScratch.back(); 
-    opScratch.pop_back();
-    cout << t3 << t2 << t1 << endl;
-  }
+ for(auto &ins : iVector)
+ {
+    printIns(ins);
+ }
   return 0;
 }
