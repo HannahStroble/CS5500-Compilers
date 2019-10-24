@@ -435,7 +435,7 @@ L   : T_IDENT T_LBRACK E T_RBRACK
 
         sprintf(tmp, "t%d", genTemp());
         strcpy(ins1.addr, tmp);
-        strcpy(ins2.a2, tmp);
+        strcpy(ins2.a2, tmp); //whoops wrong argument
 
         sprintf(tmp, "t%d", genTemp());
         strcpy($$.addr, tmp);
@@ -586,7 +586,7 @@ void printIns(instruction in)
   }
   else if(in.code == OPCODE_IF) //FJMP
   {
-    printf("if %s == false goto %s\n", in.a1, in.addr);
+    printf("if %s == false goto %s\n", in.a1, in.addr); //output addr, not arg
   }
   else if(in.code == OPCODE_AS) //normal op
   {
