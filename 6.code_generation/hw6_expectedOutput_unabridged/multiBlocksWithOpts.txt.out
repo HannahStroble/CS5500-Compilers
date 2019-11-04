@@ -1,0 +1,162 @@
+
+Instruction list before optimization is:
+(0) x = 5  
+(1) t1 = x + 7
+(2) y = t1  
+(3) z = x  
+(4) t2 = x + 7
+(5) w = t2  
+(6) L1:
+(7) t3 = x > y
+(8) if t3 == false goto L2
+(9) t4 = x + 10
+(10) z = t4  
+(11) goto L1
+(12) L2:
+(13) t5 = x + 0
+(14) q = t5  
+
+Block leaders are as follows:
+(0)
+(6)
+(9)
+(12)
+
+
+Blocks are as follows:
+B0: (0) - (5)
+B1: (6) - (8)
+B2: (9) - (11)
+B3: (12) - (14)
+
+Executing constantFolding for (0) - (5)
+Executing algebraicSimplification for (0) - (5)
+Executing commonSubexprElimination for (0) - (5)
+(0) x = 5  
+(1) t1 = 5 + 7
+(2) y = t1  
+(3) z = 5  
+(4) t2 = t1  
+(5) w = t2  
+(6) L1:
+(7) t3 = x > y
+(8) if t3 == false goto L2
+(9) t4 = x + 10
+(10) z = t4  
+(11) goto L1
+(12) L2:
+(13) t5 = x + 0
+(14) q = t5  
+Executing constantFolding for (0) - (5)
+Executing algebraicSimplification for (0) - (5)
+Executing commonSubexprElimination for (0) - (5)
+(0) x = 5  
+(1) t1 = 5 + 7
+(2) y = t1  
+(3) z = 5  
+(4) t2 = t1  
+(5) w = t2  
+(6) L1:
+(7) t3 = x > y
+(8) if t3 == false goto L2
+(9) t4 = x + 10
+(10) z = t4  
+(11) goto L1
+(12) L2:
+(13) t5 = x + 0
+(14) q = t5  
+
+Eliminating temp vars that have constant value
+Executing constantFolding for (6) - (8)
+Executing algebraicSimplification for (6) - (8)
+Executing commonSubexprElimination for (6) - (8)
+(0) x = 5  
+(1) t1 = 5 + 7
+(2) y = t1  
+(3) z = 5  
+(4) t2 = t1  
+(5) w = t2  
+(6) L1:
+(7) t3 = x > y
+(8) if t3 == false goto L2
+(9) t4 = x + 10
+(10) z = t4  
+(11) goto L1
+(12) L2:
+(13) t5 = x + 0
+(14) q = t5  
+
+Eliminating temp vars that have constant value
+Executing constantFolding for (9) - (11)
+Executing algebraicSimplification for (9) - (11)
+Executing commonSubexprElimination for (9) - (11)
+(0) x = 5  
+(1) t1 = 5 + 7
+(2) y = t1  
+(3) z = 5  
+(4) t2 = t1  
+(5) w = t2  
+(6) L1:
+(7) t3 = x > y
+(8) if t3 == false goto L2
+(9) t4 = x + 10
+(10) z = t4  
+(11) goto L1
+(12) L2:
+(13) t5 = x + 0
+(14) q = t5  
+
+Eliminating temp vars that have constant value
+Executing constantFolding for (12) - (14)
+Executing algebraicSimplification for (12) - (14)
+Executing commonSubexprElimination for (12) - (14)
+(0) x = 5  
+(1) t1 = 5 + 7
+(2) y = t1  
+(3) z = 5  
+(4) t2 = t1  
+(5) w = t2  
+(6) L1:
+(7) t3 = x > y
+(8) if t3 == false goto L2
+(9) t4 = x + 10
+(10) z = t4  
+(11) goto L1
+(12) L2:
+(13) t5 = x  
+(14) q = t5  
+Executing constantFolding for (12) - (14)
+Executing algebraicSimplification for (12) - (14)
+Executing commonSubexprElimination for (12) - (14)
+(0) x = 5  
+(1) t1 = 5 + 7
+(2) y = t1  
+(3) z = 5  
+(4) t2 = t1  
+(5) w = t2  
+(6) L1:
+(7) t3 = x > y
+(8) if t3 == false goto L2
+(9) t4 = x + 10
+(10) z = t4  
+(11) goto L1
+(12) L2:
+(13) t5 = x  
+(14) q = t5  
+
+Eliminating temp vars that have constant value
+(0) x = 5  
+(1) t1 = 5 + 7
+(2) y = t1  
+(3) z = 5  
+(4) t2 = t1  
+(5) w = t2  
+(6) L1:
+(7) t3 = x > y
+(8) if t3 == false goto L2
+(9) t4 = x + 10
+(10) z = t4  
+(11) goto L1
+(12) L2:
+(13) t5 = x  
+(14) q = t5  

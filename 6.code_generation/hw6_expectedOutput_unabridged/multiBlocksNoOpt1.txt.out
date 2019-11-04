@@ -1,0 +1,64 @@
+
+Instruction list before optimization is:
+(0) L1:
+(1) t1 = x > 10
+(2) if t1 == false goto L2
+(3) t2 = x + 1
+(4) x = t2  
+(5) goto L1
+(6) L2:
+
+Block leaders are as follows:
+(0)
+(3)
+(6)
+
+
+Blocks are as follows:
+B0: (0) - (2)
+B1: (3) - (5)
+B2: (6) - (6)
+
+Executing constantFolding for (0) - (2)
+Executing algebraicSimplification for (0) - (2)
+Executing commonSubexprElimination for (0) - (2)
+(0) L1:
+(1) t1 = x > 10
+(2) if t1 == false goto L2
+(3) t2 = x + 1
+(4) x = t2  
+(5) goto L1
+(6) L2:
+
+Eliminating temp vars that have constant value
+Executing constantFolding for (3) - (5)
+Executing algebraicSimplification for (3) - (5)
+Executing commonSubexprElimination for (3) - (5)
+(0) L1:
+(1) t1 = x > 10
+(2) if t1 == false goto L2
+(3) t2 = x + 1
+(4) x = t2  
+(5) goto L1
+(6) L2:
+
+Eliminating temp vars that have constant value
+Executing constantFolding for (6) - (6)
+Executing algebraicSimplification for (6) - (6)
+Executing commonSubexprElimination for (6) - (6)
+(0) L1:
+(1) t1 = x > 10
+(2) if t1 == false goto L2
+(3) t2 = x + 1
+(4) x = t2  
+(5) goto L1
+(6) L2:
+
+Eliminating temp vars that have constant value
+(0) L1:
+(1) t1 = x > 10
+(2) if t1 == false goto L2
+(3) t2 = x + 1
+(4) x = t2  
+(5) goto L1
+(6) L2:

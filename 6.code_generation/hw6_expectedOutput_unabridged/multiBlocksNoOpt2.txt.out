@@ -1,0 +1,170 @@
+
+Instruction list before optimization is:
+(0) x = 5  
+(1) y = 7  
+(2) L1:
+(3) t1 = x > y
+(4) if t1 == false goto L2
+(5) L3:
+(6) t2 = y < 100
+(7) if t2 == false goto L4
+(8) t3 = x + 10
+(9) x = t3  
+(10) goto L3
+(11) L4:
+(12) goto L1
+(13) L2:
+(14) q = 4  
+
+Block leaders are as follows:
+(0)
+(2)
+(5)
+(8)
+(11)
+(13)
+
+
+Blocks are as follows:
+B0: (0) - (1)
+B1: (2) - (4)
+B2: (5) - (7)
+B3: (8) - (10)
+B4: (11) - (12)
+B5: (13) - (14)
+
+Executing constantFolding for (0) - (1)
+Executing algebraicSimplification for (0) - (1)
+Executing commonSubexprElimination for (0) - (1)
+(0) x = 5  
+(1) y = 7  
+(2) L1:
+(3) t1 = x > y
+(4) if t1 == false goto L2
+(5) L3:
+(6) t2 = y < 100
+(7) if t2 == false goto L4
+(8) t3 = x + 10
+(9) x = t3  
+(10) goto L3
+(11) L4:
+(12) goto L1
+(13) L2:
+(14) q = 4  
+
+Eliminating temp vars that have constant value
+Executing constantFolding for (2) - (4)
+Executing algebraicSimplification for (2) - (4)
+Executing commonSubexprElimination for (2) - (4)
+(0) x = 5  
+(1) y = 7  
+(2) L1:
+(3) t1 = x > y
+(4) if t1 == false goto L2
+(5) L3:
+(6) t2 = y < 100
+(7) if t2 == false goto L4
+(8) t3 = x + 10
+(9) x = t3  
+(10) goto L3
+(11) L4:
+(12) goto L1
+(13) L2:
+(14) q = 4  
+
+Eliminating temp vars that have constant value
+Executing constantFolding for (5) - (7)
+Executing algebraicSimplification for (5) - (7)
+Executing commonSubexprElimination for (5) - (7)
+(0) x = 5  
+(1) y = 7  
+(2) L1:
+(3) t1 = x > y
+(4) if t1 == false goto L2
+(5) L3:
+(6) t2 = y < 100
+(7) if t2 == false goto L4
+(8) t3 = x + 10
+(9) x = t3  
+(10) goto L3
+(11) L4:
+(12) goto L1
+(13) L2:
+(14) q = 4  
+
+Eliminating temp vars that have constant value
+Executing constantFolding for (8) - (10)
+Executing algebraicSimplification for (8) - (10)
+Executing commonSubexprElimination for (8) - (10)
+(0) x = 5  
+(1) y = 7  
+(2) L1:
+(3) t1 = x > y
+(4) if t1 == false goto L2
+(5) L3:
+(6) t2 = y < 100
+(7) if t2 == false goto L4
+(8) t3 = x + 10
+(9) x = t3  
+(10) goto L3
+(11) L4:
+(12) goto L1
+(13) L2:
+(14) q = 4  
+
+Eliminating temp vars that have constant value
+Executing constantFolding for (11) - (12)
+Executing algebraicSimplification for (11) - (12)
+Executing commonSubexprElimination for (11) - (12)
+(0) x = 5  
+(1) y = 7  
+(2) L1:
+(3) t1 = x > y
+(4) if t1 == false goto L2
+(5) L3:
+(6) t2 = y < 100
+(7) if t2 == false goto L4
+(8) t3 = x + 10
+(9) x = t3  
+(10) goto L3
+(11) L4:
+(12) goto L1
+(13) L2:
+(14) q = 4  
+
+Eliminating temp vars that have constant value
+Executing constantFolding for (13) - (14)
+Executing algebraicSimplification for (13) - (14)
+Executing commonSubexprElimination for (13) - (14)
+(0) x = 5  
+(1) y = 7  
+(2) L1:
+(3) t1 = x > y
+(4) if t1 == false goto L2
+(5) L3:
+(6) t2 = y < 100
+(7) if t2 == false goto L4
+(8) t3 = x + 10
+(9) x = t3  
+(10) goto L3
+(11) L4:
+(12) goto L1
+(13) L2:
+(14) q = 4  
+
+Eliminating temp vars that have constant value
+(0) x = 5  
+(1) y = 7  
+(2) L1:
+(3) t1 = x > y
+(4) if t1 == false goto L2
+(5) L3:
+(6) t2 = y < 100
+(7) if t2 == false goto L4
+(8) t3 = x + 10
+(9) x = t3  
+(10) goto L3
+(11) L4:
+(12) goto L1
+(13) L2:
+(14) q = 4  

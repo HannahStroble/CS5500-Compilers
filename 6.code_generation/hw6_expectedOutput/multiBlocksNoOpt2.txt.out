@@ -1,0 +1,15 @@
+(0) x = 5  
+(1) y = 7  
+(2) L1:
+(3) t1 = x > y
+(4) if t1 == false goto L2
+(5) L3:
+(6) t2 = y < 100
+(7) if t2 == false goto L4
+(8) t3 = x + 10
+(9) x = t3  
+(10) goto L3
+(11) L4:
+(12) goto L1
+(13) L2:
+(14) q = 4  

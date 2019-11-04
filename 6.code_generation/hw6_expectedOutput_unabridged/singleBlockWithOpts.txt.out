@@ -1,0 +1,60 @@
+
+Instruction list before optimization is:
+(0) a = 0  
+(1) b = 1  
+(2) c = 5  
+(3) t1 = a + 0
+(4) t2 = t1 + 1
+(5) x = t2  
+
+Block leaders are as follows:
+(0)
+
+
+Blocks are as follows:
+B0: (0) - (5)
+
+Executing constantFolding for (0) - (5)
+Executing algebraicSimplification for (0) - (5)
+Executing commonSubexprElimination for (0) - (5)
+(0) a = 0  
+(1) b = 1  
+(2) c = 5  
+(3) t1 = 0  
+(4) t2 = t1 + 1
+(5) x = t2  
+Executing constantFolding for (0) - (5)
+Executing algebraicSimplification for (0) - (5)
+Executing commonSubexprElimination for (0) - (5)
+(0) a = 0  
+(1) b = 1  
+(2) c = 5  
+(3) t1 = 0  
+(4) t2 = 1  
+(5) x = t2  
+Executing constantFolding for (0) - (5)
+Executing algebraicSimplification for (0) - (5)
+Executing commonSubexprElimination for (0) - (5)
+(0) a = 0  
+(1) b = 1  
+(2) c = 5  
+(3) t1 = 0  
+(4) t2 = 1  
+(5) x = 1  
+Executing constantFolding for (0) - (5)
+Executing algebraicSimplification for (0) - (5)
+Executing commonSubexprElimination for (0) - (5)
+(0) a = 0  
+(1) b = 1  
+(2) c = 5  
+(3) t1 = 0  
+(4) t2 = 1  
+(5) x = 1  
+
+Eliminating temp vars that have constant value
+(3) can be deleted
+(4) can be deleted
+(0) a = 0  
+(1) b = 1  
+(2) c = 5  
+(3) x = 1  
