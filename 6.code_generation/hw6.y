@@ -30,6 +30,7 @@
 #include <vector>
 #include <map>
 #include <cstring>
+#include <string>
 using namespace std;
 
 // Operator codes
@@ -58,6 +59,7 @@ int tempNum = 0;
 int labelNum = 0;
 
 bool blockLookAhead = false;
+bool keepOptimizing = true;
 
 typedef char Cstring[5];
 
@@ -79,6 +81,7 @@ typedef struct
 
 typedef vector<int> SubscriptInfo;
 vector<block> blocks;
+vector<int> deadCode;
 
 map<char, SubscriptInfo> symbolTable;
 SubscriptInfo currentSubscriptInfo;  
@@ -648,7 +651,7 @@ int main( )
   for (int i = 0; i < instrxList.size(); i++)
   {
     // print 3 code
-    printInstruction(instrxList[i]);
+    //printInstruction(instrxList[i]);
     
     // check for label
     if (instrxList[i].opCode == OP_LABEL)
@@ -708,9 +711,113 @@ int main( )
   }
   // update last block
   blocks[blocks.size()-1].end = instrxList.size()-1;
-  printBlocks(blocks);
+  //printBlocks(blocks);
   
-    
+  ////////// PERFORM OPTIMIZATIONS //////////
+  for (int i = 0; i < blocks.size(); i++)
+  {
+    //while(keepOptimizing)
+   // {
+      keepOptimizing = false;
+      for (int j = blocks[i].start; j <= blocks[i].end; j++)
+      {
+  
+  ////////// CONSTANT FOLDING ///////////////
+  // eliminate temps, figure out what they were
+    /*
+      // search within arguments
+      if (instrxList[j].arg1[0] == 't')
+      {
+        // find temps
+        cout << "FOUND TEMP: " << instrxList[j].arg1 << endl;
+      }
+      
+      // start out by printing all args and results
+      cout << "result: ";
+      printf(instrxList[j].result);
+      cout << "   arg1: ";
+      printf(instrxList[j].arg1);
+      cout << "   arg2: ";
+      printf(instrxList[j].arg2);
+      cout << endl;
+      */
+      // put result in a dictionary
+      // check both sides of the expression and see if there are variables
+      // if variables then check dictionary for them
+      // if they are not found then put a check to make sure another iteration happens
+      // if they are there then replace with value found in dictionary
+      
+      keepOptimizing = false;
+  
+  ///////// ALGEBRAIC SIMPLIFICATION ///////
+  // eliminate needless 0 or 1 addition or multiplication
+  /*
+      string t0 = to_string(0);
+      char const *tmp0 = t0.c_str();
+      string t1 = to_string(1);
+      char const *tmp1 = t1.c_str();
+  
+      if ((instrxList[j].arg1 == tmp1)
+              && (instrxList[j].opCode == OP_STAR) 
+              && (instrxList[j].arg2.size() == 1))
+      {
+        instrxList[j].opCode = OP_NA;
+        instrxList[j].arg1 = instrxList[j].arg2;
+        instrxList[j].arg2 = "";
+      }
+      else if ((instrxList[j].arg2 == tmp1)
+              && (instrxList[j].opCode == OP_STAR) 
+              && (instrxList[j].arg1.size() == 1))
+      {
+        instrxList[j].opCode = OP_NA;
+        instrxList[j].arg1 = instrxList[j].arg2;
+        instrxList[j].arg2 = "";
+      }
+      
+      if ((instrxList[j].arg1 == tmp0)
+              && (instrxList[j].opCode == OP_PLUS) 
+              && (instrxList[j].arg2.size() == 1))
+      {
+        instrxList[j].opCode = OP_NA;
+        instrxList[j].arg1 = instrxList[j].arg2;
+        instrxList[j].arg2 = "";
+      }
+      else if ((instrxList[j].arg2 == tmp0)
+              && (instrxList[j].opCode == OP_PLUS) 
+              && (instrxList[j].arg1.size() == 1))
+      {
+        instrxList[j].opCode = OP_NA;
+        instrxList[j].arg1 = instrxList[j].arg2;
+        instrxList[j].arg2 = "";
+      }
+      */
+  
+  
+  ///////// COMMON SUBEXPRESSION ELIMINATION ///////
+  
+      }
+   // }
+  }
+  
+  //////// ELIMINATE DEAD CODE ////////////
+  // things assigned to temps will be eliminated alltogether
+  // deadCode vector stores all locations of dead code within instrxList
+  // iterate through the list and delete dead code
+  /*
+  while(deadCode.empty() == false)
+  {
+    instrxList.erase(instrxList.begin() + deadCode.back());
+    deadCode.pop_back();
+  }
+  */
+  
+  //////// OUTPUT 3-ADDRESS CODE PROGRAM //////////
+  // print results
+  for (int i = 0; i < instrxList.size(); i++)
+  {
+    cout << "(" << i << ") ";
+    printInstruction(instrxList[i]);
+  }
   
 
   return 0;

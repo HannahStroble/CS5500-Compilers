@@ -69,6 +69,7 @@
 #include <vector>
 #include <map>
 #include <cstring>
+#include <string>
 using namespace std;
 
 // Operator codes
@@ -97,6 +98,7 @@ int tempNum = 0;
 int labelNum = 0;
 
 bool blockLookAhead = false;
+bool keepOptimizing = true;
 
 typedef char Cstring[5];
 
@@ -118,6 +120,7 @@ typedef struct
 
 typedef vector<int> SubscriptInfo;
 vector<block> blocks;
+vector<int> deadCode;
 
 map<char, SubscriptInfo> symbolTable;
 SubscriptInfo currentSubscriptInfo;  
@@ -153,7 +156,7 @@ extern "C"
 }
 
 
-#line 157 "hw6.tab.c" /* yacc.c:339  */
+#line 160 "hw6.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -218,14 +221,14 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 118 "hw6.y" /* yacc.c:355  */
+#line 121 "hw6.y" /* yacc.c:355  */
 
   char ch;
   int num;
   Instruction instrx;
   Cstring cstring;
 
-#line 229 "hw6.tab.c" /* yacc.c:355  */
+#line 232 "hw6.tab.c" /* yacc.c:355  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -242,7 +245,7 @@ int yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 246 "hw6.tab.c" /* yacc.c:358  */
+#line 249 "hw6.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -542,10 +545,10 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   148,   148,   155,   159,   158,   168,   175,   179,   184,
-     188,   192,   196,   201,   213,   225,   237,   242,   224,   267,
-     279,   266,   306,   323,   333,   349,   358,   381,   412,   425,
-     430,   436,   441,   446,   451,   456,   461
+       0,   151,   151,   158,   162,   161,   171,   178,   182,   187,
+     191,   195,   199,   204,   216,   228,   240,   245,   227,   270,
+     282,   269,   309,   326,   336,   352,   361,   384,   415,   428,
+     433,   439,   444,   449,   454,   459,   464
 };
 #endif
 
@@ -1355,99 +1358,99 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 149 "hw6.y" /* yacc.c:1646  */
+#line 152 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("P", "var V { C }");
 	if (DEBUG) printf("\n---- Completed parsing ----\n\n");
 	}
-#line 1364 "hw6.tab.c" /* yacc.c:1646  */
+#line 1367 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 3:
-#line 155 "hw6.y" /* yacc.c:1646  */
+#line 158 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("V", "epsilon");
 	}
-#line 1372 "hw6.tab.c" /* yacc.c:1646  */
+#line 1375 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 4:
-#line 159 "hw6.y" /* yacc.c:1646  */
+#line 162 "hw6.y" /* yacc.c:1646  */
     {
 	addEntryToSymbolTable((yyvsp[-2].ch), currentSubscriptInfo);
 	currentSubscriptInfo.clear( );
 	}
-#line 1381 "hw6.tab.c" /* yacc.c:1646  */
+#line 1384 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 5:
-#line 164 "hw6.y" /* yacc.c:1646  */
+#line 167 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("V", "id N ; V");
 	}
-#line 1389 "hw6.tab.c" /* yacc.c:1646  */
+#line 1392 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 169 "hw6.y" /* yacc.c:1646  */
+#line 172 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("N", "[ INTCONST ] N");
 	currentSubscriptInfo.insert(currentSubscriptInfo.begin(),
                                  (yyvsp[-2].num));
 	}
-#line 1399 "hw6.tab.c" /* yacc.c:1646  */
+#line 1402 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 175 "hw6.y" /* yacc.c:1646  */
+#line 178 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("N", "epsilon");
 	}
-#line 1407 "hw6.tab.c" /* yacc.c:1646  */
+#line 1410 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 180 "hw6.y" /* yacc.c:1646  */
+#line 183 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("C", "S ; C");
 	}
-#line 1415 "hw6.tab.c" /* yacc.c:1646  */
+#line 1418 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 184 "hw6.y" /* yacc.c:1646  */
+#line 187 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("C", "epsilon");
 	}
-#line 1423 "hw6.tab.c" /* yacc.c:1646  */
+#line 1426 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 189 "hw6.y" /* yacc.c:1646  */
+#line 192 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("S", "A ;");
 	}
-#line 1431 "hw6.tab.c" /* yacc.c:1646  */
+#line 1434 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 193 "hw6.y" /* yacc.c:1646  */
+#line 196 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("S", "F");
 	}
-#line 1439 "hw6.tab.c" /* yacc.c:1646  */
+#line 1442 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 197 "hw6.y" /* yacc.c:1646  */
+#line 200 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("S", "W");
 	}
-#line 1447 "hw6.tab.c" /* yacc.c:1646  */
+#line 1450 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 202 "hw6.y" /* yacc.c:1646  */
+#line 205 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("A", "id = E");
 	SubscriptInfo s = findEntryInSymbolTable((yyvsp[-2].ch));
@@ -1459,11 +1462,11 @@ yyreduce:
 	x.opCode = OP_NA; 
 	addInstruction(x);
 	}
-#line 1463 "hw6.tab.c" /* yacc.c:1646  */
+#line 1466 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 214 "hw6.y" /* yacc.c:1646  */
+#line 217 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("A", "L = E");
 	Instruction x;
@@ -1473,11 +1476,11 @@ yyreduce:
 	x.opCode = OP_ASSIGN_INDEXED_LHS; 
 	addInstruction(x);
 	}
-#line 1477 "hw6.tab.c" /* yacc.c:1646  */
+#line 1480 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 225 "hw6.y" /* yacc.c:1646  */
+#line 228 "hw6.y" /* yacc.c:1646  */
     {
 	Instruction x;
     	Cstring buffer;
@@ -1489,20 +1492,20 @@ yyreduce:
 	x.opCode = OP_IF_FALSE;
 	addInstruction(x);
  	}
-#line 1493 "hw6.tab.c" /* yacc.c:1646  */
+#line 1496 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 237 "hw6.y" /* yacc.c:1646  */
+#line 240 "hw6.y" /* yacc.c:1646  */
     {
  	sprintf((yyval.cstring), "L%d", 
              generateNewLabel());    // where to go when done
  	}
-#line 1502 "hw6.tab.c" /* yacc.c:1646  */
+#line 1505 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 242 "hw6.y" /* yacc.c:1646  */
+#line 245 "hw6.y" /* yacc.c:1646  */
     {
 	Instruction x1, x2;
  	strcpy(x1.result, (yyvsp[-2].cstring)); // L.done
@@ -1516,11 +1519,11 @@ yyreduce:
 	x2.opCode = OP_LABEL;
 	addInstruction(x2);
 	}
-#line 1520 "hw6.tab.c" /* yacc.c:1646  */
+#line 1523 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 256 "hw6.y" /* yacc.c:1646  */
+#line 259 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("F", "if ( B ) then S else S");
 	Instruction x;
@@ -1530,11 +1533,11 @@ yyreduce:
 	x.opCode = OP_LABEL;
 	addInstruction(x);
 	}
-#line 1534 "hw6.tab.c" /* yacc.c:1646  */
+#line 1537 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 267 "hw6.y" /* yacc.c:1646  */
+#line 270 "hw6.y" /* yacc.c:1646  */
     {
 	Instruction x;
 	Cstring buffer;
@@ -1546,11 +1549,11 @@ yyreduce:
 	x.opCode = OP_LABEL;
 	addInstruction(x);
 	}
-#line 1550 "hw6.tab.c" /* yacc.c:1646  */
+#line 1553 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 279 "hw6.y" /* yacc.c:1646  */
+#line 282 "hw6.y" /* yacc.c:1646  */
     {
 	Instruction x;
 	Cstring buffer;
@@ -1562,11 +1565,11 @@ yyreduce:
 	x.opCode = OP_IF_FALSE;
      	addInstruction(x);
 	}
-#line 1566 "hw6.tab.c" /* yacc.c:1646  */
+#line 1569 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 291 "hw6.y" /* yacc.c:1646  */
+#line 294 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("S", "while ( B ) S");
 	Instruction x1, x2;
@@ -1581,11 +1584,11 @@ yyreduce:
   	x2.opCode = OP_LABEL;
   	addInstruction(x2);
 	}
-#line 1585 "hw6.tab.c" /* yacc.c:1646  */
+#line 1588 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 307 "hw6.y" /* yacc.c:1646  */
+#line 310 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("E", "E + INTCONST");
   	Instruction x;
@@ -1602,11 +1605,11 @@ yyreduce:
   	x.opCode = OP_PLUS; 
   	addInstruction(x);
 	}
-#line 1606 "hw6.tab.c" /* yacc.c:1646  */
+#line 1609 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 324 "hw6.y" /* yacc.c:1646  */
+#line 327 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("E", "id");
 	SubscriptInfo s = findEntryInSymbolTable((yyvsp[0].ch));
@@ -1616,11 +1619,11 @@ yyreduce:
     	strcpy((yyval.instrx).arg2, "");
     	(yyval.instrx).opCode = OP_NA;
 	}
-#line 1620 "hw6.tab.c" /* yacc.c:1646  */
+#line 1623 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 24:
-#line 334 "hw6.y" /* yacc.c:1646  */
+#line 337 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("E", "L");
     	Instruction x;
@@ -1636,11 +1639,11 @@ yyreduce:
     	x.opCode = OP_ASSIGN_INDEXED_RHS;
     	addInstruction(x);
 	}
-#line 1640 "hw6.tab.c" /* yacc.c:1646  */
+#line 1643 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 350 "hw6.y" /* yacc.c:1646  */
+#line 353 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("E", "INTCONST");
   	sprintf((yyval.instrx).result, "%d", (yyvsp[0].num));
@@ -1648,11 +1651,11 @@ yyreduce:
   	strcpy((yyval.instrx).arg2, "");
   	(yyval.instrx).opCode = OP_NA;
 	}
-#line 1652 "hw6.tab.c" /* yacc.c:1646  */
+#line 1655 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 359 "hw6.y" /* yacc.c:1646  */
+#line 362 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("L", "id [ E ]");
 	SubscriptInfo s = findEntryInSymbolTable((yyvsp[-3].ch));
@@ -1675,11 +1678,11 @@ yyreduce:
   	x.opCode = OP_STAR;
   	addInstruction(x);
 	}
-#line 1679 "hw6.tab.c" /* yacc.c:1646  */
+#line 1682 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 382 "hw6.y" /* yacc.c:1646  */
+#line 385 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("L", "L [ E ]");
   	Instruction x1, x2;
@@ -1709,11 +1712,11 @@ yyreduce:
      	addInstruction(x1);
      	addInstruction(x2);
 	}
-#line 1713 "hw6.tab.c" /* yacc.c:1646  */
+#line 1716 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 413 "hw6.y" /* yacc.c:1646  */
+#line 416 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("B", "E R E");
 	Instruction x;
@@ -1726,83 +1729,83 @@ yyreduce:
     	x.opCode = (yyvsp[-1].num); 
     	addInstruction(x);
 	}
-#line 1730 "hw6.tab.c" /* yacc.c:1646  */
+#line 1733 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 29:
-#line 426 "hw6.y" /* yacc.c:1646  */
+#line 429 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("B", "true");
     	strcpy((yyval.instrx).result, "true");
 	}
-#line 1739 "hw6.tab.c" /* yacc.c:1646  */
+#line 1742 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 30:
-#line 431 "hw6.y" /* yacc.c:1646  */
+#line 434 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("B", "false");
    	strcpy((yyval.instrx).result, "false");
 	}
-#line 1748 "hw6.tab.c" /* yacc.c:1646  */
+#line 1751 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 437 "hw6.y" /* yacc.c:1646  */
+#line 440 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("R", ">");
    	(yyval.num) = OP_GT;
 	}
-#line 1757 "hw6.tab.c" /* yacc.c:1646  */
+#line 1760 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 32:
-#line 442 "hw6.y" /* yacc.c:1646  */
+#line 445 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("R", "<");
     	(yyval.num) = OP_LT;
 	}
-#line 1766 "hw6.tab.c" /* yacc.c:1646  */
+#line 1769 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 447 "hw6.y" /* yacc.c:1646  */
+#line 450 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("R", "!=");
      	(yyval.num) = OP_NE;
 	}
-#line 1775 "hw6.tab.c" /* yacc.c:1646  */
+#line 1778 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 34:
-#line 452 "hw6.y" /* yacc.c:1646  */
+#line 455 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("R", ">=");
     	(yyval.num) = OP_GE;
 	}
-#line 1784 "hw6.tab.c" /* yacc.c:1646  */
+#line 1787 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 457 "hw6.y" /* yacc.c:1646  */
+#line 460 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("R", "<=");
     	(yyval.num) = OP_LE;
 	}
-#line 1793 "hw6.tab.c" /* yacc.c:1646  */
+#line 1796 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
   case 36:
-#line 462 "hw6.y" /* yacc.c:1646  */
+#line 465 "hw6.y" /* yacc.c:1646  */
     {
 	prRule("R", "==");
      	(yyval.num) = OP_EQ;
 	}
-#line 1802 "hw6.tab.c" /* yacc.c:1646  */
+#line 1805 "hw6.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1806 "hw6.tab.c" /* yacc.c:1646  */
+#line 1809 "hw6.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2030,7 +2033,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 467 "hw6.y" /* yacc.c:1906  */
+#line 470 "hw6.y" /* yacc.c:1906  */
 
 
 #include "lex.yy.c"
@@ -2215,7 +2218,7 @@ int main( )
   for (int i = 0; i < instrxList.size(); i++)
   {
     // print 3 code
-    printInstruction(instrxList[i]);
+    //printInstruction(instrxList[i]);
     
     // check for label
     if (instrxList[i].opCode == OP_LABEL)
@@ -2275,9 +2278,113 @@ int main( )
   }
   // update last block
   blocks[blocks.size()-1].end = instrxList.size()-1;
-  printBlocks(blocks);
+  //printBlocks(blocks);
   
-    
+  ////////// PERFORM OPTIMIZATIONS //////////
+  for (int i = 0; i < blocks.size(); i++)
+  {
+    //while(keepOptimizing)
+   // {
+      keepOptimizing = false;
+      for (int j = blocks[i].start; j <= blocks[i].end; j++)
+      {
+  
+  ////////// CONSTANT FOLDING ///////////////
+  // eliminate temps, figure out what they were
+    /*
+      // search within arguments
+      if (instrxList[j].arg1[0] == 't')
+      {
+        // find temps
+        cout << "FOUND TEMP: " << instrxList[j].arg1 << endl;
+      }
+      
+      // start out by printing all args and results
+      cout << "result: ";
+      printf(instrxList[j].result);
+      cout << "   arg1: ";
+      printf(instrxList[j].arg1);
+      cout << "   arg2: ";
+      printf(instrxList[j].arg2);
+      cout << endl;
+      */
+      // put result in a dictionary
+      // check both sides of the expression and see if there are variables
+      // if variables then check dictionary for them
+      // if they are not found then put a check to make sure another iteration happens
+      // if they are there then replace with value found in dictionary
+      
+      keepOptimizing = false;
+  
+  ///////// ALGEBRAIC SIMPLIFICATION ///////
+  // eliminate needless 0 or 1 addition or multiplication
+  /*
+      string t0 = to_string(0);
+      char const *tmp0 = t0.c_str();
+      string t1 = to_string(1);
+      char const *tmp1 = t1.c_str();
+  
+      if ((instrxList[j].arg1 == tmp1)
+              && (instrxList[j].opCode == OP_STAR) 
+              && (instrxList[j].arg2.size() == 1))
+      {
+        instrxList[j].opCode = OP_NA;
+        instrxList[j].arg1 = instrxList[j].arg2;
+        instrxList[j].arg2 = "";
+      }
+      else if ((instrxList[j].arg2 == tmp1)
+              && (instrxList[j].opCode == OP_STAR) 
+              && (instrxList[j].arg1.size() == 1))
+      {
+        instrxList[j].opCode = OP_NA;
+        instrxList[j].arg1 = instrxList[j].arg2;
+        instrxList[j].arg2 = "";
+      }
+      
+      if ((instrxList[j].arg1 == tmp0)
+              && (instrxList[j].opCode == OP_PLUS) 
+              && (instrxList[j].arg2.size() == 1))
+      {
+        instrxList[j].opCode = OP_NA;
+        instrxList[j].arg1 = instrxList[j].arg2;
+        instrxList[j].arg2 = "";
+      }
+      else if ((instrxList[j].arg2 == tmp0)
+              && (instrxList[j].opCode == OP_PLUS) 
+              && (instrxList[j].arg1.size() == 1))
+      {
+        instrxList[j].opCode = OP_NA;
+        instrxList[j].arg1 = instrxList[j].arg2;
+        instrxList[j].arg2 = "";
+      }
+      */
+  
+  
+  ///////// COMMON SUBEXPRESSION ELIMINATION ///////
+  
+      }
+   // }
+  }
+  
+  //////// ELIMINATE DEAD CODE ////////////
+  // things assigned to temps will be eliminated alltogether
+  // deadCode vector stores all locations of dead code within instrxList
+  // iterate through the list and delete dead code
+  /*
+  while(deadCode.empty() == false)
+  {
+    instrxList.erase(instrxList.begin() + deadCode.back());
+    deadCode.pop_back();
+  }
+  */
+  
+  //////// OUTPUT 3-ADDRESS CODE PROGRAM //////////
+  // print results
+  for (int i = 0; i < instrxList.size(); i++)
+  {
+    cout << "(" << i << ") ";
+    printInstruction(instrxList[i]);
+  }
   
 
   return 0;
