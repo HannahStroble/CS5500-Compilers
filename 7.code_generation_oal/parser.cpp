@@ -65,7 +65,7 @@ void Parser::prog(Lexer &lex, vector<string> &currentToken)
       #endif
 
       //init block with file offsets
-      oal_prog << "  init L.0 " << display_size << ", L." << stack_label << ", L." << code_label << ", L." << main_label << endl;
+      oal_prog << "  init L.0, " << display_size << ", L." << stack_label << ", L." << code_label << ", L." << main_label << endl;
       oal_prog << "L.0:" << endl;
 
       currentToken = lex.getToken();
@@ -525,7 +525,7 @@ void Parser::readStmt(Lexer &lex, vector<string> &currentToken)
       {
         oal_prog << "  cread" << endl;
       }
-      oal_prog << "st"
+      oal_prog << "st" << endl;
       inputLst(lex, currentToken);
       if (currentToken[0] == "T_RPAREN")
         currentToken = lex.getToken();
@@ -542,7 +542,16 @@ void Parser::inputLst(Lexer &lex, vector<string> &currentToken)
   {
     printRule("N_INPUTLST", "T_COMMA N_INPUTVAR N_INPUTLST");
     currentToken = lex.getToken();
-    inputVar(lex, currentToken);
+    TYPE_INFO info = inputVar(lex, currentToken);
+    if(info.type == INT)
+    {
+      oal_prog << "  iread" << endl;
+    }
+    else
+    {
+      oal_prog << "  cread" << endl;
+    }
+    oal_prog << "st" << endl;
     inputLst(lex, currentToken);
   }
   else printRule("N_INPUTLST", "epsilon");
@@ -565,7 +574,15 @@ void Parser::writeStmt(Lexer &lex, vector<string> &currentToken) {
     if (currentToken[0] == "T_LPAREN")
     {
       currentToken = lex.getToken();
-      output(lex, currentToken);
+      TYPE_INFO info = output(lex, currentToken);
+      if(info.type == INT)
+      {
+        oal_prog << "  iwrite" << endl;
+      }
+      else
+      {
+        oal_prog << "  cwrite" << endl;
+      }
       outputLst(lex, currentToken);
       if (currentToken[0] == "T_RPAREN")
         currentToken = lex.getToken();
@@ -582,19 +599,27 @@ void Parser::outputLst(Lexer &lex, vector<string> &currentToken)
   {
     printRule("N_OUTPUTLST", "T_COMMA N_OUTPUT N_OUTPUTLST");
     currentToken = lex.getToken();
-    output(lex, currentToken);
+    TYPE_INFO info = output(lex, currentToken);
+    if(info.type == INT)
+    {
+      oal_prog << "  iwrite" << endl;
+    }
+    else
+    {
+      oal_prog << "  cwrite" << endl;
+    }
     outputLst(lex, currentToken);
   }
   else printRule("N_OUTPUTLST", "epsilon");
 }
 
-void Parser::output(Lexer &lex, vector<string> &currentToken) 
+TYPE_INFO Parser::output(Lexer &lex, vector<string> &currentToken) 
 {
   printRule("N_OUTPUT", "N_EXPR");
   TYPE_INFO info = expr(lex, currentToken);
   if ((info.type != INT) && (info.type != CHAR))
-    printError(currentToken, 
-               ERR_OUTPUT_VAR_MUST_BE_INT_OR_CHAR);
+    printError(currentToken, ERR_OUTPUT_VAR_MUST_BE_INT_OR_CHAR);
+  return info;
 }
 
 void Parser::conditionStmt(Lexer &lex, vector<string> &currentToken) 
@@ -929,17 +954,27 @@ TYPE_INFO Parser::constant(Lexer &lex, vector<string> &currentToken)
   }
   else if ((currentToken[0] == "T_INTCONST") ||
            (currentToken[0] == "T_CHARCONST"))
-       {
-         printRule("N_CONST", currentToken[0]);
-         if (currentToken[0] == "T_INTCONST")
-           info.type = INT;
-         else info.type = CHAR; 
-         info.startIndex = NOT_APPLICABLE;
-         info.endIndex = NOT_APPLICABLE;
-         info.baseType = NOT_APPLICABLE;  
-         currentToken = lex.getToken();
-       }
-       else syntaxError(currentToken);
+  {
+    printRule("N_CONST", currentToken[0]);
+    if (currentToken[0] == "T_INTCONST")
+    {
+      info.type = INT;
+      oal_prog << "  lc " << currentToken[1] << endl;
+    }
+    else 
+    {
+      info.type = CHAR; 
+      oal_prog << "  lc " << (int)currentToken[1][1] << endl;
+    }
+    info.startIndex = NOT_APPLICABLE;
+    info.endIndex = NOT_APPLICABLE;
+    info.baseType = NOT_APPLICABLE;
+
+
+
+    currentToken = lex.getToken();
+  }
+  else syntaxError(currentToken);
   return(info);
 }
 
@@ -950,6 +985,10 @@ TYPE_INFO Parser::boolConst(Lexer &lex, vector<string> &currentToken)
   if ((currentToken[0] == "T_TRUE") ||
       (currentToken[0] == "T_FALSE"))
   {
+    if (currentToken[0] == "T_TRUE")
+      oal_prog << "  lc 1" << endl;
+    else
+      oal_prog << "  lc 0" << endl;
     printRule("N_BOOLCONST", currentToken[0]);
     info.type = BOOL;
     info.startIndex = NOT_APPLICABLE;
