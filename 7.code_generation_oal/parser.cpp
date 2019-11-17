@@ -4,6 +4,18 @@
 bool Parser::print_productions_flag = false;
 bool Parser::print_symbolTableMgt_flag = false;
 
+const int display_size = 20;
+const int stack_size = 500;
+
+int label = 1;
+int nest_level = 1;
+int stack_label;
+int main_label;
+int code_label;
+
+
+ostringstream oal_prog;
+
 
 void Parser::printRule(const string lhs, const string rhs)
 {
@@ -33,11 +45,9 @@ void Parser::prog(Lexer &lex, vector<string> &currentToken)
   progLbl(lex, currentToken);
   if (currentToken[0] == "T_IDENT") 
   {
-    TYPE_INFO info = {PROGRAM, NOT_APPLICABLE,
-                      NOT_APPLICABLE, NOT_APPLICABLE};
+    TYPE_INFO info = {PROGRAM, NOT_APPLICABLE, NOT_APPLICABLE, NOT_APPLICABLE};
     prSymbolTableAddition(currentToken[1], info);
-    scopeStack.top().addEntry
-     (SYMBOL_TABLE_ENTRY(currentToken[1],info));
+    scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(currentToken[1],info));
     currentToken = lex.getToken();
     if (currentToken[0] == "T_SCOLON")
     {
@@ -63,8 +73,7 @@ void Parser::progLbl(Lexer &lex, vector<string> &currentToken)
  
 void Parser::block(Lexer &lex, vector<string> &currentToken) 
 {
-  printRule("N_BLOCK", 
-            "N_VARDECPART N_PROCDECPART N_STMTPART");
+  printRule("N_BLOCK", "N_VARDECPART N_PROCDECPART N_STMTPART");
   varDecPart(lex, currentToken);
   procDecPart(lex, currentToken);
   stmtPart(lex, currentToken);
@@ -74,8 +83,7 @@ void Parser::block(Lexer &lex, vector<string> &currentToken)
 void Parser::varDecPart(Lexer &lex, vector<string> &currentToken) {
   if (currentToken[0] == "T_VAR") 
   {
-    printRule("N_VARDECPART",
-              "T_VAR N_VARDEC T_SCOLON N_VARDECLST");
+    printRule("N_VARDECPART", "T_VAR N_VARDEC T_SCOLON N_VARDECLST");
     currentToken = lex.getToken();
     varDec(lex, currentToken);
     if (currentToken[0] == "T_SCOLON")
@@ -116,14 +124,11 @@ void Parser::varDec(Lexer &lex, vector<string> &currentToken)
     TYPE_INFO info = identType(lex, currentToken);
     // Add to symbol table each identifier that is on
     // variableNames list, assigning it type info
-    for (std::list<string>::iterator
-         it = variableNames.begin();
-         it != variableNames.end(); it++) 
+    for (std::list<string>::iterator it = variableNames.begin(); it != variableNames.end(); it++) 
     {
       string varName = string(*it);
       prSymbolTableAddition(varName, info);
-      bool success = scopeStack.top().addEntry
-       (SYMBOL_TABLE_ENTRY(varName, info));
+      bool success = scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(varName, info));
       if (!success)
         printError(currentToken, MULTIPLY_DEFINED);
     }
@@ -180,9 +185,7 @@ TYPE_INFO Parser::array(Lexer &lex,
 {
   TYPE_INFO info;
 
-  printRule("N_ARRAY",
-            "T_ARRAY T_LBRACK N_IDXRANGE T_RBRACK T_OF"
-            " N_SIMPLE");
+  printRule("N_ARRAY", "T_ARRAY T_LBRACK N_IDXRANGE T_RBRACK T_OF N_SIMPLE");
   if (currentToken[0] == "T_ARRAY")
   {
     currentToken = lex.getToken();
@@ -227,8 +230,7 @@ int Parser::idx(Lexer &lex, vector<string> &currentToken)
   return(val);
 }
 
-TYPE_INFO Parser::idxRange(Lexer &lex, 
-                           vector<string> &currentToken) 
+TYPE_INFO Parser::idxRange(Lexer &lex, vector<string> &currentToken) 
 {
   TYPE_INFO info;
 
@@ -240,15 +242,13 @@ TYPE_INFO Parser::idxRange(Lexer &lex,
     currentToken = lex.getToken();
     info.endIndex = idx(lex, currentToken);
     if (info.endIndex < info.startIndex)
-      printError(currentToken,
-                 ERR_START_INDEX_MUST_BE_LE_END_INDEX);
+      printError(currentToken, ERR_START_INDEX_MUST_BE_LE_END_INDEX);
   }
   else syntaxError(currentToken);
   return(info);
 }
 
-TYPE_INFO Parser::simple(Lexer &lex, 
-                         vector<string> &currentToken) 
+TYPE_INFO Parser::simple(Lexer &lex, vector<string> &currentToken) 
 {
   TYPE_INFO info;
   if ((currentToken[0] == "T_INT") ||
@@ -259,7 +259,7 @@ TYPE_INFO Parser::simple(Lexer &lex,
     if (currentToken[0] == "T_INT")
       info.type = INT;
     else if (currentToken[0] == "T_CHAR")
-           info.type = CHAR;
+      info.type = CHAR;
     else info.type = BOOL;
     info.startIndex = NOT_APPLICABLE;
     info.endIndex = NOT_APPLICABLE;
@@ -275,8 +275,7 @@ void Parser::procDecPart(Lexer &lex,
 {
   if (currentToken[0] == "T_PROC")
   {
-    printRule("N_PROCDECPART",
-              "N_PROCDEC T_SCOLON N_PROCDECPART");
+    printRule("N_PROCDECPART", "N_PROCDEC T_SCOLON N_PROCDECPART");
     procDec(lex, currentToken);
     if (currentToken[0] == "T_SCOLON")
     {
@@ -303,15 +302,12 @@ void Parser::procHdr(Lexer &lex, vector<string> &currentToken)
     currentToken = lex.getToken();
     if (currentToken[0] == "T_IDENT")
     {
-      TYPE_INFO info = {PROCEDURE, NOT_APPLICABLE,
-                        NOT_APPLICABLE, NOT_APPLICABLE};
-                        prSymbolTableAddition(currentToken[1],
-                                              info);
-      bool success = scopeStack.top().addEntry
-                      (SYMBOL_TABLE_ENTRY(currentToken[1],
-                                          info));
+      TYPE_INFO info = {PROCEDURE, NOT_APPLICABLE, NOT_APPLICABLE, NOT_APPLICABLE};
+      prSymbolTableAddition(currentToken[1], info);
+      bool success = scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(currentToken[1], info));
       if (!success) 
         printError(currentToken, MULTIPLY_DEFINED);
+      
       currentToken = lex.getToken();
       if (currentToken[0] == "T_SCOLON")
         currentToken = lex.getToken();
@@ -329,8 +325,7 @@ void Parser::stmtPart(Lexer &lex, vector<string> &currentToken)
   compoundStmt(lex, currentToken);
 }
 
-void Parser::compoundStmt(Lexer &lex, 
-                          vector<string> &currentToken) 
+void Parser::compoundStmt(Lexer &lex, vector<string> &currentToken) 
 {
   printRule("N_COMPOUND", "T_BEGIN N_STMT N_STMTLST T_END");
   if (currentToken[0] == "T_BEGIN")
@@ -360,50 +355,51 @@ void Parser::stmtLst(Lexer &lex, vector<string> &currentToken)
 void Parser::stmt(Lexer &lex, vector<string> &currentToken) 
 {
   if (currentToken[0] == "T_READ")
-    {
-      printRule("N_STMT", "N_READ");
-      readStmt(lex, currentToken);
-    }
+  {
+    printRule("N_STMT", "N_READ");
+    readStmt(lex, currentToken);
+  }
   else if (currentToken[0] == "T_WRITE")
-         {
-           printRule("N_STMT", "N_WRITE");
-           writeStmt(lex, currentToken);
-         }
+  {
+    printRule("N_STMT", "N_WRITE");
+    writeStmt(lex, currentToken);
+  }
   else if (currentToken[0] == "T_IF")
-         {
-           printRule("N_STMT", "N_CONDITION");
-           conditionStmt(lex, currentToken);
-         }
+  {
+    printRule("N_STMT", "N_CONDITION");
+    conditionStmt(lex, currentToken);
+  }
   else if (currentToken[0] == "T_WHILE")
-         {
-           printRule("N_STMT", "N_WHILE");
-           whileStmt(lex, currentToken);
-         }
+  {
+    printRule("N_STMT", "N_WHILE");
+    whileStmt(lex, currentToken);
+  }
   else if (currentToken[0] == "T_BEGIN")
-         {
-           printRule("N_STMT", "N_COMPOUND");
-           compoundStmt(lex, currentToken);
-         }
-  else {
-         TYPE_INFO typeInfo = 
-           findEntryInAnyScope(currentToken[1]);
-         switch (typeInfo.type) 
-         {
-           case UNDEFINED : 
-             printError(currentToken, UNDEFINED_IDENT);
-             break;
-           case PROCEDURE :
-             printRule("N_STMT", "N_PROCSTMT");
-             procStmt(lex, currentToken);
-             break;
-           default :
-             printRule("N_STMT", "N_ASSIGN");
-             assignStmt(lex, currentToken);
-         }
-       }
+  {
+    printRule("N_STMT", "N_COMPOUND");
+    compoundStmt(lex, currentToken);
+  }
+  else 
+  {
+    TYPE_INFO typeInfo = findEntryInAnyScope(currentToken[1]);
+    switch (typeInfo.type) 
+    {
+      case UNDEFINED : 
+        printError(currentToken, UNDEFINED_IDENT);
+        break;
+      case PROCEDURE :
+        printRule("N_STMT", "N_PROCSTMT");
+        procStmt(lex, currentToken);
+        break;
+      default :
+        printRule("N_STMT", "N_ASSIGN");
+        assignStmt(lex, currentToken);
+    }
+  }
 }
 
-void Parser::assignStmt(Lexer &lex, vector<string> &currentToken) {
+void Parser::assignStmt(Lexer &lex, vector<string> &currentToken) 
+{
   TYPE_INFO lhsType, rhsType;
 
   printRule("N_ASSIGN", "N_VARIABLE T_ASSIGN N_EXPR");
@@ -424,7 +420,8 @@ void Parser::procStmt(Lexer &lex, vector<string> &currentToken)
   procIdent(lex, currentToken);
 }
 
-void Parser::procIdent(Lexer &lex, vector<string> &currentToken) {
+void Parser::procIdent(Lexer &lex, vector<string> &currentToken) 
+{
   printRule("N_PROCIDENT", "T_IDENT");
   if (currentToken[0] == "T_IDENT")
   {
@@ -442,8 +439,7 @@ void Parser::procIdent(Lexer &lex, vector<string> &currentToken) {
 
 void Parser::readStmt(Lexer &lex, vector<string> &currentToken) 
 {
-  printRule("N_READ", 
-            "T_READ T_LPAREN N_INPUTVAR N_INPUTLST T_RPAREN");
+  printRule("N_READ", "T_READ T_LPAREN N_INPUTVAR N_INPUTLST T_RPAREN");
   if (currentToken[0] == "T_READ")
   {
     currentToken = lex.getToken();
@@ -478,13 +474,11 @@ void Parser::inputVar(Lexer &lex, vector<string> &currentToken)
   printRule("N_INPUTVAR", "N_VARIABLE");
   TYPE_INFO info = variable(lex, currentToken);
   if ((info.type != INT) && (info.type != CHAR))
-    printError(currentToken, 
-               ERR_INPUT_VAR_MUST_BE_INT_OR_CHAR);
+    printError(currentToken, ERR_INPUT_VAR_MUST_BE_INT_OR_CHAR);
 }
 
 void Parser::writeStmt(Lexer &lex, vector<string> &currentToken) {
-  printRule("N_WRITE", 
-            "T_WRITE T_LPAREN N_OUTPUT N_OUTPUTLST T_RPAREN");
+  printRule("N_WRITE", "T_WRITE T_LPAREN N_OUTPUT N_OUTPUTLST T_RPAREN");
   if (currentToken[0] == "T_WRITE")
   {
     currentToken = lex.getToken();
@@ -502,7 +496,8 @@ void Parser::writeStmt(Lexer &lex, vector<string> &currentToken) {
   else syntaxError(currentToken);
 }
 
-void Parser::outputLst(Lexer &lex, vector<string> &currentToken) {
+void Parser::outputLst(Lexer &lex, vector<string> &currentToken) 
+{
   if (currentToken[0] == "T_COMMA")
   {
     printRule("N_OUTPUTLST", "T_COMMA N_OUTPUT N_OUTPUTLST");
@@ -522,11 +517,9 @@ void Parser::output(Lexer &lex, vector<string> &currentToken)
                ERR_OUTPUT_VAR_MUST_BE_INT_OR_CHAR);
 }
 
-void Parser::conditionStmt(Lexer &lex, 
-                           vector<string> &currentToken) 
+void Parser::conditionStmt(Lexer &lex, vector<string> &currentToken) 
 {
-  printRule("N_CONDITION", 
-            "T_IF N_EXPR T_THEN N_STMT N_ELSEPART");
+  printRule("N_CONDITION", "T_IF N_EXPR T_THEN N_STMT N_ELSEPART");
   if (currentToken[0] == "T_IF")
   {
     currentToken = lex.getToken();
@@ -555,7 +548,8 @@ void Parser::elsePart(Lexer &lex, vector<string> &currentToken)
   else printRule("N_ELSEPART", "epsilon");
 }
 
-void Parser::whileStmt(Lexer &lex, vector<string> &currentToken) {
+void Parser::whileStmt(Lexer &lex, vector<string> &currentToken) 
+{
   printRule("N_WHILE", "T_WHILE N_EXPR T_DO N_STMT");
   if (currentToken[0] == "T_WHILE")
   {
@@ -573,8 +567,7 @@ void Parser::whileStmt(Lexer &lex, vector<string> &currentToken) {
   else syntaxError(currentToken);
 }
 
-TYPE_INFO Parser::expr(Lexer &lex, 
-                       vector<string> &currentToken) 
+TYPE_INFO Parser::expr(Lexer &lex, vector<string> &currentToken) 
 {
   TYPE_INFO lhsType, rhsType;
 
@@ -585,8 +578,7 @@ TYPE_INFO Parser::expr(Lexer &lex,
   if (rhsType.type != NOT_APPLICABLE)
   {
     if (lhsType.type != rhsType.type)
-      printError(currentToken, 
-                 ERR_EXPRS_MUST_BOTH_BE_SAME_TYPE);
+      printError(currentToken, ERR_EXPRS_MUST_BOTH_BE_SAME_TYPE);
 
     // Type of this expr is type of simpleExpr
     // or just bool if there was a relop after
@@ -599,8 +591,7 @@ TYPE_INFO Parser::expr(Lexer &lex,
   return(lhsType);
 }
 
-TYPE_INFO Parser::opExpr(Lexer &lex, 
-                         vector<string> &currentToken) 
+TYPE_INFO Parser::opExpr(Lexer &lex, vector<string> &currentToken) 
 {
   TYPE_INFO info;
 
@@ -626,8 +617,7 @@ TYPE_INFO Parser::opExpr(Lexer &lex,
   return(info);
 }
 
-TYPE_INFO Parser::simpleExpr(Lexer &lex, 
-                             vector<string> &currentToken) 
+TYPE_INFO Parser::simpleExpr(Lexer &lex, vector<string> &currentToken) 
 {
   printRule("N_SIMPLEEXPR", "N_TERM N_ADDOPLST");
   TYPE_INFO info = term(lex, currentToken);
@@ -653,8 +643,7 @@ void Parser::addOpLst(Lexer &lex, vector<string> &currentToken)
   else printRule("N_ADDOPLST", "epsilon");
 }
 
-TYPE_INFO Parser::term(Lexer &lex, 
-                       vector<string> &currentToken) 
+TYPE_INFO Parser::term(Lexer &lex, vector<string> &currentToken) 
 {
   TYPE_INFO info;
 
@@ -664,10 +653,10 @@ TYPE_INFO Parser::term(Lexer &lex,
   return(info);
 }
 
-void Parser::multOpLst(Lexer &lex, 
-                       vector<string> &currentToken) {
+void Parser::multOpLst(Lexer &lex, vector<string> &currentToken) 
+{
   if ((currentToken[0] == "T_MULT") || 
-      (currentToken[0] == "T_DIV") || 
+      (currentToken[0] == "T_DIV")  || 
       (currentToken[0] == "T_AND")) 
   {
     printRule("N_MULTOPLST", "N_MULTOP N_FACTOR N_MULTOPLST");
@@ -682,8 +671,7 @@ void Parser::multOpLst(Lexer &lex,
   else printRule("N_MULTOPLST", "epsilon");
 }
 
-TYPE_INFO Parser::factor(Lexer &lex, 
-                         vector<string> &currentToken) 
+TYPE_INFO Parser::factor(Lexer &lex, vector<string> &currentToken) 
 {
   TYPE_INFO info;
 
@@ -708,9 +696,9 @@ TYPE_INFO Parser::factor(Lexer &lex,
     }
     else
     {
-      if ((currentToken[0] == "T_INTCONST") ||
-          (currentToken[0] == "T_CHARCONST") ||
-          (currentToken[0] == "T_TRUE") || 
+      if ((currentToken[0] == "T_INTCONST")   ||
+          (currentToken[0] == "T_CHARCONST")  ||
+          (currentToken[0] == "T_TRUE")       || 
           (currentToken[0] == "T_FALSE"))
       {
         printRule("N_FACTOR", "N_CONST");
@@ -750,7 +738,7 @@ int Parser::addOp(Lexer &lex, vector<string> &currentToken)
 {
   int opType;
 
-  if ((currentToken[0] == "T_PLUS") || 
+  if ((currentToken[0] == "T_PLUS")  || 
       (currentToken[0] == "T_MINUS") ||
       (currentToken[0] == "T_OR"))
   { 
@@ -769,7 +757,7 @@ int Parser::multOp(Lexer &lex, vector<string> &currentToken)
   int opType;
 
   if ((currentToken[0] == "T_MULT") || 
-      (currentToken[0] == "T_DIV") || 
+      (currentToken[0] == "T_DIV")  || 
       (currentToken[0] == "T_AND"))
   {
     printRule("N_MULTOP", currentToken[0]);
@@ -808,7 +796,7 @@ TYPE_INFO Parser::variable(Lexer &lex,
   {
     typeInfo = findEntryInAnyScope(currentToken[1]);
     if (typeInfo.type == UNDEFINED) 
-      printError(currentToken, UNDEFINED_IDENT);
+      printError(currentToken, UNDEFINED_IDENT);+
     if (typeInfo.type == PROCEDURE)
       printError(currentToken, ERR_PROCEDURE_VAR_MISMATCH);
     currentToken = lex.getToken();
@@ -829,8 +817,7 @@ TYPE_INFO Parser::variable(Lexer &lex,
   return(typeInfo);
 }
 
-bool Parser::idxVar(Lexer &lex, 
-                    vector<string> &currentToken) 
+bool Parser::idxVar(Lexer &lex, vector<string> &currentToken) 
 {
   bool isArrayElement = false;
 
@@ -850,8 +837,7 @@ bool Parser::idxVar(Lexer &lex,
   return(isArrayElement);
 }
 
-TYPE_INFO Parser::constant(Lexer &lex, 
-                           vector<string> &currentToken) 
+TYPE_INFO Parser::constant(Lexer &lex, vector<string> &currentToken) 
 {
   TYPE_INFO info;
 
@@ -877,8 +863,7 @@ TYPE_INFO Parser::constant(Lexer &lex,
   return(info);
 }
 
-TYPE_INFO Parser::boolConst(Lexer &lex, 
-                            vector<string> &currentToken) 
+TYPE_INFO Parser::boolConst(Lexer &lex, vector<string> &currentToken) 
 {
   TYPE_INFO info;
 
@@ -915,33 +900,50 @@ void Parser::prSymbolTableAddition(const string identName,
 {
   if (print_symbolTableMgt_flag) 
   {
-   char *cstr = new char[identName.length() + 1];
-   strcpy(cstr, identName.c_str());
-   printf("\n+++ Adding %s to symbol table with type ", cstr);
-   delete [] cstr;
-   switch (typeInfo.type) {
-	case PROGRAM	: printf("PROGRAM\n"); break;
-	case PROCEDURE	: printf("PROCEDURE\n"); break;
-	case INT		: printf("INTEGER\n"); break;
-	case CHAR		: printf("CHAR\n"); break;
-	case BOOL		: printf("BOOLEAN\n"); break;
-	case ARRAY		: printf("ARRAY ");
-				  printf("%d .. %d OF ",
-				         typeInfo.startIndex, 
-				         typeInfo.endIndex);
-				  switch (typeInfo.baseType) {
-				    case INT : printf("INTEGER\n"); 
-                                     break;
-				    case CHAR: printf("CHAR\n"); 
-                                     break;
-				    case BOOL: printf("BOOLEAN\n"); 
-                                     break;
-				    default  : printf("UNKNOWN\n"); 
-                                     break;
-				  }
-				  break;
-	default 		: printf("UNKNOWN\n"); break;
-   }
+    char *cstr = new char[identName.length() + 1];
+    strcpy(cstr, identName.c_str());
+    printf("\n+++ Adding %s to symbol table with type ", cstr);
+    delete [] cstr;
+    switch (typeInfo.type) 
+    {
+      case PROGRAM: 
+        printf("PROGRAM\n"); 
+        break;
+      case PROCEDURE:
+        printf("PROCEDURE\n"); 
+        break;
+      case INT:
+        printf("INTEGER\n"); 
+        break;
+      case CHAR: 
+        printf("CHAR\n"); 
+        break;
+      case BOOL: 
+        printf("BOOLEAN\n"); 
+        break;
+      case ARRAY:
+        printf("ARRAY ");
+			  printf("%d .. %d OF ", typeInfo.startIndex, typeInfo.endIndex);
+			  switch (typeInfo.baseType) 
+        {
+		      case INT: 
+            printf("INTEGER\n"); 
+            break;
+			    case CHAR: 
+            printf("CHAR\n"); 
+            break;
+          case BOOL: 
+            printf("BOOLEAN\n"); 
+            break;
+          default: 
+            printf("UNKNOWN\n"); 
+            break;
+				}
+			  break;
+      default: 
+        printf("UNKNOWN\n"); 
+        break;
+    }
   }
 }
 
