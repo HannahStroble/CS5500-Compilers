@@ -8,13 +8,14 @@ const int display_size = 20;
 const int stack_size = 500;
 
 int label = 1;
-int nest_level = 1;
+int nest_level = 0;
 int stack_label;
 int main_label;
 int code_label;
 
 
 ostringstream oal_prog;
+int mem_words = 0;
 
 
 void Parser::printRule(const string lhs, const string rhs)
@@ -40,8 +41,7 @@ void Parser::printError(const vector<string> currentToken,
 
 void Parser::prog(Lexer &lex, vector<string> &currentToken) 
 {
-  printRule("N_PROG", 
-            "N_PROGLBL T_IDENT T_SCOLON N_BLOCK T_DOT"); 
+  printRule("N_PROG", "N_PROGLBL T_IDENT T_SCOLON N_BLOCK T_DOT"); 
   progLbl(lex, currentToken);
   if (currentToken[0] == "T_IDENT") 
   {
@@ -50,11 +50,32 @@ void Parser::prog(Lexer &lex, vector<string> &currentToken)
     scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(currentToken[1],info));
     currentToken = lex.getToken();
     if (currentToken[0] == "T_SCOLON")
-    {
+    {        
+      //init block
+      mem_words = 0;
+
+      //grab labels and increment as you go
+      stack_label = label++;
+      code_label  = label++;
+      main_label  = label++;
+
+      cout << "stack_label :" << stack_label << endl;
+      cout << "code_label  :" << code_label << endl;
+      cout << "main_label  :" << main_label << endl;
+      //init block with file offsets
+      oal_prog << "  init L.0 " << display_size << ", L." << stack_label << ", L." << code_label << ", L." << main_label << endl;
+      oal_prog << "L.0:" << endl;
+
       currentToken = lex.getToken();
       block(lex, currentToken);
       if (currentToken[0] == "T_DOT")
+      {
+        oal_prog << "  halt" << endl;
+        oal_prog << "L." << stack_label << ":" << endl;
+        oal_prog << "  bss " << stack_size << endl;
+        oal_prog << "  end" << endl;
         currentToken = lex.getToken();
+      }
       else syntaxError(currentToken);
     }
     else syntaxError(currentToken);
@@ -75,12 +96,25 @@ void Parser::block(Lexer &lex, vector<string> &currentToken)
 {
   printRule("N_BLOCK", "N_VARDECPART N_PROCDECPART N_STMTPART");
   varDecPart(lex, currentToken);
+  //after we know how many words we have we add bss for it
+  if(nest_level == 0)
+  {
+    oal_prog << "  bss " << display_size + mem_words << endl;
+    oal_prog << "L." << code_label << ":" << endl;
+  }
+  else
+  {
+    //Get words of memory for scope here
+    //  *add count in var dec rule?
+    //  *add query function to scope?
+  }
   procDecPart(lex, currentToken);
   stmtPart(lex, currentToken);
   endScope();
 }
  
-void Parser::varDecPart(Lexer &lex, vector<string> &currentToken) {
+void Parser::varDecPart(Lexer &lex, vector<string> &currentToken) 
+{
   if (currentToken[0] == "T_VAR") 
   {
     printRule("N_VARDECPART", "T_VAR N_VARDEC T_SCOLON N_VARDECLST");
@@ -321,6 +355,14 @@ void Parser::procHdr(Lexer &lex, vector<string> &currentToken)
 
 void Parser::stmtPart(Lexer &lex, vector<string> &currentToken) 
 {
+  if(nest_level == 0)
+  {
+    oal_prog << "L." << main_label << ":" << endl;
+  }
+  else
+  {
+    //figure this out later
+  }
   printRule("N_STMTPART", "N_COMPOUND");
   compoundStmt(lex, currentToken);
 }
@@ -796,7 +838,7 @@ TYPE_INFO Parser::variable(Lexer &lex,
   {
     typeInfo = findEntryInAnyScope(currentToken[1]);
     if (typeInfo.type == UNDEFINED) 
-      printError(currentToken, UNDEFINED_IDENT);+
+      printError(currentToken, UNDEFINED_IDENT);
     if (typeInfo.type == PROCEDURE)
       printError(currentToken, ERR_PROCEDURE_VAR_MISMATCH);
     currentToken = lex.getToken();

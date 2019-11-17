@@ -13,6 +13,7 @@
 #include <iomanip>
 using namespace std;
 
+extern ostringstream oal_prog;
 
 class Lexer 
 {

@@ -60,10 +60,11 @@ int main(int argc, char** argv)
   // At the end of parsing, currentToken should be the
   // end-of-file token (i.e., "")
   if (currentToken[0] != "")
-    cout << "\nSyntax error: unexpected chars at end"
-            " of program!\n";
+    cout << "\nSyntax error: unexpected chars at end of program!\n";
   else cout << "\n---- Completed parsing ----\n";
 
+  //make this dump to a file when we're done
+  cout << oal_prog.str();
 
   fin.close();
 
