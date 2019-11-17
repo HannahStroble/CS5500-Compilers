@@ -1,4 +1,5 @@
 #include "parser.h"
+#define OAL_DEBUG 0
 
 // Static Parser variables
 bool Parser::print_productions_flag = false;
@@ -21,7 +22,7 @@ int mem_words = 0;
 void Parser::printRule(const string lhs, const string rhs)
 {
   if (print_productions_flag)
-    cout << lhs << " -> " << rhs << endl; 
+    cout << lhs << " -> " << rhs << endl;
   return;
 }
 
@@ -30,11 +31,9 @@ void Parser::syntaxError(const vector<string> currentToken) const
   printError(currentToken, "syntax error");  
 }
 
-void Parser::printError(const vector<string> currentToken,
-                        const string msg) const 
+void Parser::printError(const vector<string> currentToken, const string msg) const 
 {
-  cout << "Line " << currentToken[2]
-       << ": " << msg << endl;
+  cout << "Line " << currentToken[2] << ": " << msg << endl;
   exit(1);
 }
 
@@ -59,9 +58,12 @@ void Parser::prog(Lexer &lex, vector<string> &currentToken)
       code_label  = label++;
       main_label  = label++;
 
+      #if OAL_DEBUG
       cout << "stack_label :" << stack_label << endl;
       cout << "code_label  :" << code_label << endl;
       cout << "main_label  :" << main_label << endl;
+      #endif
+
       //init block with file offsets
       oal_prog << "  init L.0 " << display_size << ", L." << stack_label << ", L." << code_label << ", L." << main_label << endl;
       oal_prog << "L.0:" << endl;
@@ -104,7 +106,7 @@ void Parser::block(Lexer &lex, vector<string> &currentToken)
   }
   else
   {
-    //Get words of memory for scope here
+    //TODO Get words of memory for scope here
     //  *add count in var dec rule?
     //  *add query function to scope?
   }
@@ -361,10 +363,23 @@ void Parser::stmtPart(Lexer &lex, vector<string> &currentToken)
   }
   else
   {
-    //figure this out later
+    //TODO figure this out later
+    //get label info
+    //get words
+    //L.[# label]:
+    //  save [# nest level], 0
+    //if words > 0
+    //  asp [# words]
   }
   printRule("N_STMTPART", "N_COMPOUND");
   compoundStmt(lex, currentToken);
+  if(nest_level != 0)
+  {
+    //get mem word count
+    //if words > 0
+    //    asp -[# words] (calculates offset accounting for memory segs)
+    //ji
+  }
 }
 
 void Parser::compoundStmt(Lexer &lex, vector<string> &currentToken) 
