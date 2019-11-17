@@ -469,12 +469,19 @@ void Parser::assignStmt(Lexer &lex, vector<string> &currentToken)
       printError(currentToken, ERR_EXPR_MUST_BE_SAME_AS_VAR);
   }
   else syntaxError(currentToken);
+
+  oal_prog << "st" << endl;
 }
 
 void Parser::procStmt(Lexer &lex, vector<string> &currentToken) 
 {
   printRule("N_PROCSTMT", "N_PROCIDENT");
   procIdent(lex, currentToken);
+  //todo get caller nest level from procIdent
+  //for(callerLevel = procIdentNestLevel; callerLevel <= nest_level; callerLevel++)
+  //{
+  //  oal_prog << "pop" << callerLevel << ", 0" << endl;
+  //}
 }
 
 void Parser::procIdent(Lexer &lex, vector<string> &currentToken) 
@@ -490,6 +497,11 @@ void Parser::procIdent(Lexer &lex, vector<string> &currentToken)
     if (typeInfo.type != PROCEDURE)
       printError(currentToken, ERR_PROCEDURE_VAR_MISMATCH);
     currentToken = lex.getToken();
+    //todo get caller nest level from procIdent
+    //for(callerLevel = nest_level; callerLevel >= nest_level; callerLevel++)
+    //{
+    //  oal_prog << "pop" << callerLevel << ", 0" << endl;
+    //}
   }
   else syntaxError(currentToken);
 }
@@ -503,7 +515,17 @@ void Parser::readStmt(Lexer &lex, vector<string> &currentToken)
     if (currentToken[0] == "T_LPAREN")
     {
       currentToken = lex.getToken();
-      inputVar(lex, currentToken);
+      //get type of input var
+      TYPE_INFO info = inputVar(lex, currentToken);
+      if(info.type == INT)
+      {
+        oal_prog << "  iread" << endl;
+      }
+      else
+      {
+        oal_prog << "  cread" << endl;
+      }
+      oal_prog << "st"
       inputLst(lex, currentToken);
       if (currentToken[0] == "T_RPAREN")
         currentToken = lex.getToken();
@@ -526,12 +548,13 @@ void Parser::inputLst(Lexer &lex, vector<string> &currentToken)
   else printRule("N_INPUTLST", "epsilon");
 }
 
-void Parser::inputVar(Lexer &lex, vector<string> &currentToken) 
+TYPE_INFO Parser::inputVar(Lexer &lex, vector<string> &currentToken) 
 {
   printRule("N_INPUTVAR", "N_VARIABLE");
   TYPE_INFO info = variable(lex, currentToken);
   if ((info.type != INT) && (info.type != CHAR))
     printError(currentToken, ERR_INPUT_VAR_MUST_BE_INT_OR_CHAR);
+  return info;
 }
 
 void Parser::writeStmt(Lexer &lex, vector<string> &currentToken) {
