@@ -14,7 +14,9 @@ int stack_label;
 int main_label;
 int code_label;
 
+stack<int> labels;
 
+ostringstream oal_tmp;
 ostringstream oal_prog;
 int mem_words = 0;
 
@@ -371,6 +373,7 @@ void Parser::stmtPart(Lexer &lex, vector<string> &currentToken)
     //if words > 0
     //  asp [# words]
   }
+  oal_prog << "# Beginning of block's N_STMTPART" << endl;
   printRule("N_STMTPART", "N_COMPOUND");
   compoundStmt(lex, currentToken);
   if(nest_level != 0)
@@ -470,7 +473,7 @@ void Parser::assignStmt(Lexer &lex, vector<string> &currentToken)
   }
   else syntaxError(currentToken);
 
-  oal_prog << "st" << endl;
+  oal_prog << "  st" << endl;
 }
 
 void Parser::procStmt(Lexer &lex, vector<string> &currentToken) 
@@ -498,10 +501,12 @@ void Parser::procIdent(Lexer &lex, vector<string> &currentToken)
       printError(currentToken, ERR_PROCEDURE_VAR_MISMATCH);
     currentToken = lex.getToken();
     //todo get caller nest level from procIdent
+    //todo get scope label from t_ident
     //for(callerLevel = nest_level; callerLevel >= nest_level; callerLevel++)
     //{
     //  oal_prog << "pop" << callerLevel << ", 0" << endl;
     //}
+    // oal_prog << "  js L." << scopeLabel << endl;
   }
   else syntaxError(currentToken);
 }
@@ -525,7 +530,7 @@ void Parser::readStmt(Lexer &lex, vector<string> &currentToken)
       {
         oal_prog << "  cread" << endl;
       }
-      oal_prog << "st" << endl;
+      oal_prog << "  st" << endl;
       inputLst(lex, currentToken);
       if (currentToken[0] == "T_RPAREN")
         currentToken = lex.getToken();
@@ -551,7 +556,7 @@ void Parser::inputLst(Lexer &lex, vector<string> &currentToken)
     {
       oal_prog << "  cread" << endl;
     }
-    oal_prog << "st" << endl;
+    oal_prog << "  st" << endl;
     inputLst(lex, currentToken);
   }
   else printRule("N_INPUTLST", "epsilon");
@@ -631,6 +636,10 @@ void Parser::conditionStmt(Lexer &lex, vector<string> &currentToken)
     TYPE_INFO info = expr(lex, currentToken);
     if (info.type != BOOL)
       printError(currentToken, ERR_EXPR_MUST_BE_BOOL);
+
+    oal_prog << " jf L. " << label << endl;
+    labels.push(label++);
+
     if (currentToken[0] == "T_THEN")
     {
       currentToken = lex.getToken();
@@ -647,10 +656,24 @@ void Parser::elsePart(Lexer &lex, vector<string> &currentToken)
   if (currentToken[0] == "T_ELSE")
   {
     printRule("N_ELSEPART", "T_ELSE N_STMT");
+    
+    oal_prog << "  jp L." << label << endl;
+    oal_prog << "L." << labels.top() << ":" << endl;
+    labels.pop();
+    labels.push(label++);
+
     currentToken = lex.getToken();
     stmt(lex, currentToken);
+
+    oal_prog << "L." << labels.top() << ":" << endl;
+    labels.pop();
   }
-  else printRule("N_ELSEPART", "epsilon");
+  else
+  { 
+    oal_prog << "L." << labels.top() << ":" << endl;
+    labels.pop();
+    printRule("N_ELSEPART", "epsilon");
+  }
 }
 
 void Parser::whileStmt(Lexer &lex, vector<string> &currentToken) 
@@ -658,14 +681,28 @@ void Parser::whileStmt(Lexer &lex, vector<string> &currentToken)
   printRule("N_WHILE", "T_WHILE N_EXPR T_DO N_STMT");
   if (currentToken[0] == "T_WHILE")
   {
+    oal_prog << "L." << label << ":" << endl;
+    labels.push(label++);
+
     currentToken = lex.getToken();
     TYPE_INFO info = expr(lex, currentToken);
+
+    oal_prog << "  jf L." << label << endl;
+    labels.push(label++);
+
     if (info.type != BOOL)
       printError(currentToken, ERR_EXPR_MUST_BE_BOOL);
     if (currentToken[0] == "T_DO")
     {
+      int out_label = labels.top();
+      labels.pop();
+      oal_prog << "  jp L." << labels.top() << endl;
+      oal_prog << "L." << out_label << ":" << endl;
+      labels.pop();
+
       currentToken = lex.getToken();
       stmt(lex, currentToken);
+
     }
     else syntaxError(currentToken);
   }
@@ -884,6 +921,13 @@ void Parser::relOp(Lexer &lex, vector<string> &currentToken)
       (currentToken[0] == "T_GT") || 
       (currentToken[0] == "T_GE"))
   {
+    if (currentToken[0] == "T_LT") {oal_tmp << "  .lt." << endl;}
+    if (currentToken[0] == "T_LE") {oal_tmp << "  .le." << endl;}
+    if (currentToken[0] == "T_NE") {oal_tmp << "  .ne." << endl;}
+    if (currentToken[0] == "T_EQ") {oal_tmp << "  .eq." << endl;}
+    if (currentToken[0] == "T_GT") {oal_tmp << "  .gt." << endl;}
+    if (currentToken[0] == "T_GE") {oal_tmp << "  .ge." << endl;}
+
     printRule("N_RELOP", currentToken[0]);   
     currentToken = lex.getToken();
   }
