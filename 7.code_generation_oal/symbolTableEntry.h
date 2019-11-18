@@ -24,7 +24,10 @@ typedef struct
   int type;        // one of the above type codes
   int startIndex;  // if array, starting index
   int endIndex;    //           ending index
-  int baseType;    //           base type (one of above codes) 
+  int baseType;    //           base type (one of above codes)
+  int level;
+  int offset;
+  int label;
 } TYPE_INFO;
 
 class SYMBOL_TABLE_ENTRY 
@@ -64,6 +67,9 @@ public:
     typeInfo.startIndex = info.startIndex;
     typeInfo.endIndex = info.endIndex;
     typeInfo.baseType = info.baseType;
+    typeInfo.level = info.level;
+    typeInfo.offset = info.offset;
+    typeInfo.label = info.label;
   }
 
   // Accessors

@@ -48,22 +48,21 @@ public:
   int countEntry() 
   {
     // Make sure there isn't already an entry with the same name
-    map<string, SYMBOL_TABLE_ENTRY>::iterator itr;
+    std::map<std::string, SYMBOL_TABLE_ENTRY>::iterator itr = hashTable.begin();
     
     // variables
     int count = 0;
-    for (itr = hashTable.begin(); itr != hashTable.end(); itr++)
+    while (itr != hashTable.end())
     {
         // set symbol table entry item
-        SYMBOL_TABLE_ENTRY y = itr->second;
+        //SYMBOL_TABLE_ENTRY y = itr->second;
         
         // see if the type is an Array type
-        int baseName = y.getBaseType();
-        
+        int baseName = itr->second.getTypeCode();
         if(baseName == ARRAY)
         {
             // if so then unravel and see how many elements there are
-            int arrayNum = y.getEndIndex() - y.getStartIndex();
+            int arrayNum = itr->second.getEndIndex() - itr->second.getStartIndex();
             
             if (arrayNum == 0)
             {
@@ -74,13 +73,14 @@ public:
                 count = count + arrayNum;
             }
         }
-        if ((y.getTypeCode() == INT) ||
-           (y.getTypeCode() == CHAR) ||
-           (y.getTypeCode() == BOOL))
+        if ((baseName == INT) ||
+           (baseName == CHAR) ||
+           (baseName == BOOL))
            {
                // at most one variable will be stored at a time per symbol table entry, besides arrays
                count++;
            }
+        itr++;
     }
     return(count);
   }

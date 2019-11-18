@@ -16,6 +16,10 @@ int code_label;
 
 stack<int> labels;
 
+vector<int> next_addr;
+
+vector<string> current_procedure;
+
 ostringstream oal_tmp;
 ostringstream oal_prog;
 int mem_words = 0;
@@ -93,6 +97,7 @@ void Parser::progLbl(Lexer &lex, vector<string> &currentToken)
   if (currentToken[0] == "T_PROG")
     currentToken = lex.getToken();
   else syntaxError(currentToken);
+  next_addr.push_back(display_size);
   beginScope();
 }
  
@@ -101,9 +106,11 @@ void Parser::block(Lexer &lex, vector<string> &currentToken)
   printRule("N_BLOCK", "N_VARDECPART N_PROCDECPART N_STMTPART");
   varDecPart(lex, currentToken);
   //after we know how many words we have we add bss for it
+  cout << "memsize: " << next_addr.back() << endl;
+  //cout << "count: " << countVarsInScope(nest_level) << endl;
   if(nest_level == 0)
   {
-    oal_prog << "  bss " << display_size + mem_words << endl;
+    oal_prog << "  bss " << next_addr.back() << endl;
     oal_prog << "L." << code_label << ":" << endl;
   }
   else
@@ -112,6 +119,7 @@ void Parser::block(Lexer &lex, vector<string> &currentToken)
     //  *add count in var dec rule?
     //  *add query function to scope?
   }
+  mem_words = 0;
   procDecPart(lex, currentToken);
   stmtPart(lex, currentToken);
   endScope();
@@ -152,6 +160,7 @@ void Parser::varDecLst(Lexer &lex, vector<string> &currentToken)
 
 void Parser::varDec(Lexer &lex, vector<string> &currentToken) 
 {
+  int size_tmp = 0;
   printRule("N_VARDEC", "N_IDENT N_IDENTLST T_COLON N_TYPE");
   // ident and identLst put identifers on variableNames list
   ident(lex, currentToken);
@@ -166,10 +175,29 @@ void Parser::varDec(Lexer &lex, vector<string> &currentToken)
     {
       string varName = string(*it);
       prSymbolTableAddition(varName, info);
+      
+      switch(info.type)
+      {
+        case INT:
+        case BOOL:
+        case CHAR:
+          size_tmp = 1;
+          break;
+        case ARRAY:
+          size_tmp = info.endIndex - info.startIndex + 1;
+      }
+      cout << "var: " << varName << " got: " << next_addr.back() << endl;
+      
+      info.level = nest_level;
+      info.offset = next_addr.back();
+      next_addr.back() += size_tmp;
+
+
       bool success = scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(varName, info));
       if (!success)
         printError(currentToken, MULTIPLY_DEFINED);
     }
+
   }
   else syntaxError(currentToken);
   variableNames.clear();
@@ -715,6 +743,11 @@ TYPE_INFO Parser::expr(Lexer &lex, vector<string> &currentToken)
 
   printRule("N_EXPR", "N_SIMPLEEXPR N_OPEXPR");
   lhsType = simpleExpr(lex, currentToken);
+  
+  oal_prog << oal_tmp.str();
+  oal_tmp.str("");
+  oal_tmp.clear();
+
   rhsType = opExpr(lex, currentToken);
 
   if (rhsType.type != NOT_APPLICABLE)
@@ -822,6 +855,7 @@ TYPE_INFO Parser::factor(Lexer &lex, vector<string> &currentToken)
     printRule("N_FACTOR", "T_LPAREN N_EXPR T_RPAREN");
     currentToken = lex.getToken();
     info = expr(lex, currentToken);
+
     if (currentToken[0] == "T_RPAREN")
       currentToken = lex.getToken();
     else syntaxError(currentToken);
@@ -840,7 +874,7 @@ TYPE_INFO Parser::factor(Lexer &lex, vector<string> &currentToken)
     {
       if ((currentToken[0] == "T_INTCONST")   ||
           (currentToken[0] == "T_CHARCONST")  ||
-          (currentToken[0] == "T_TRUE")       || 
+          (currentToken[0] == "T_TRUE")       ||
           (currentToken[0] == "T_FALSE"))
       {
         printRule("N_FACTOR", "N_CONST");
@@ -851,6 +885,7 @@ TYPE_INFO Parser::factor(Lexer &lex, vector<string> &currentToken)
         printRule("N_FACTOR", "N_SIGN N_VARIABLE");
         int signType = sign(lex, currentToken);
         info = variable(lex, currentToken);
+        oal_prog << "  deref" << endl;
         if ((signType != NO_SIGN) && (info.type != INT))
           printError(currentToken, ERR_EXPR_MUST_BE_INT);
       }
@@ -887,7 +922,12 @@ int Parser::addOp(Lexer &lex, vector<string> &currentToken)
     printRule("N_ADDOP", currentToken[0]);
     if (currentToken[0] == "T_OR")
       opType = LOGICAL_OP;
-    else opType = ARITHMETIC_OP;  
+    else opType = ARITHMETIC_OP; 
+
+    if (currentToken[0] == "T_PLUS")  {oal_tmp << "  add" << endl;}
+    if (currentToken[0] == "T_MINUS") {oal_tmp << "  sub" << endl;}
+    if (currentToken[0] == "T_OR")    {oal_tmp << "  or"  << endl;}
+
     currentToken = lex.getToken();
   }
   else syntaxError(currentToken);
@@ -906,6 +946,12 @@ int Parser::multOp(Lexer &lex, vector<string> &currentToken)
     if (currentToken[0] == "T_AND")
       opType = LOGICAL_OP;
     else opType = ARITHMETIC_OP;
+
+    if (currentToken[0] == "T_MULT") {oal_tmp << "  mult" << endl;}
+    if (currentToken[0] == "T_DIV")  {oal_tmp << "  div"  << endl;}
+    if (currentToken[0] == "T_AND")  {oal_tmp << "  and"  << endl;}
+    
+
     currentToken = lex.getToken();
   }
   else syntaxError(currentToken);
@@ -934,8 +980,7 @@ void Parser::relOp(Lexer &lex, vector<string> &currentToken)
   else syntaxError(currentToken);
 }
 
-TYPE_INFO Parser::variable(Lexer &lex, 
-                           vector<string> &currentToken) 
+TYPE_INFO Parser::variable(Lexer &lex, vector<string> &currentToken) 
 {
   TYPE_INFO typeInfo;
   bool isArrayElement;
@@ -944,14 +989,20 @@ TYPE_INFO Parser::variable(Lexer &lex,
   if (currentToken[0] == "T_IDENT")
   {
     typeInfo = findEntryInAnyScope(currentToken[1]);
+    
     if (typeInfo.type == UNDEFINED) 
       printError(currentToken, UNDEFINED_IDENT);
+    
     if (typeInfo.type == PROCEDURE)
       printError(currentToken, ERR_PROCEDURE_VAR_MISMATCH);
+    
     currentToken = lex.getToken();
+    
     isArrayElement = idxVar(lex, currentToken);
+    
     if ((typeInfo.type == ARRAY) && !isArrayElement)
       printError(currentToken, ERR_ARRAY_VAR_MUST_BE_INDEXED);
+    
     if (isArrayElement)
     {
       if (typeInfo.type != ARRAY)
@@ -960,6 +1011,10 @@ TYPE_INFO Parser::variable(Lexer &lex,
       typeInfo.startIndex = NOT_APPLICABLE;
       typeInfo.endIndex = NOT_APPLICABLE;
       typeInfo.baseType = NOT_APPLICABLE;
+    }
+    else
+    {
+      oal_prog << "  la " << typeInfo.offset << ", " << typeInfo.level << endl;
     }
   }
   else syntaxError(currentToken);
@@ -1127,12 +1182,12 @@ TYPE_INFO Parser::findEntryInAnyScope(const string theName)
   }
 }
 
-
 int Parser::countVarsInScope(const int theDepth) 
 {
   
   // variables
   int theSize = 0;
+  int theCount = 0;
   
   // see how many layers are currently in scopestack
   theSize = scopeStack.size();
@@ -1149,31 +1204,22 @@ int Parser::countVarsInScope(const int theDepth)
   }
   
   // go to that layer in the scopestack
-  int layer = theSize - theDepth; // calculate how many to pop to get to desired top level
-  for (int i = 0; i <= layer; i++)
+  int layer = theSize - (theDepth + 1); // calculate how many to pop to get to desired top level
+  
+  if (layer == 0)
   {
+    theCount = scopeStack2.top().countEntry();
+  }
+  else
+  {
+    for (int i = 0; i <= layer; i++)
+    {
       scopeStack2.pop();
+    }
+    int theCount = scopeStack2.top().countEntry();
   }
-  
-  // call a count function within symbolTable
-  int theCount = scopeStack2.top().countEntry();
-  //cout << scopeStack2.top().name() << endl;
-  
-  return theCount;
+  return(theCount);
 }
-
-
-void Parser::cleanUp() 
-{
-  if (scopeStack.empty()) 
-    return;
-  else 
-  {
-    scopeStack.pop();
-    cleanUp();
-  }
-}
-
 
 
 
