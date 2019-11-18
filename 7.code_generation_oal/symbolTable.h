@@ -42,6 +42,50 @@ public:
     else return(itr->second.getTypeInfo());
   }
 
+  
+  // Count variables in SYMBOL_TABLE_ENTRY x in this symbol table.
+  // Return number of variables including all variables in arrays.
+  int countEntry() 
+  {
+    // Make sure there isn't already an entry with the same name
+    map<string, SYMBOL_TABLE_ENTRY>::iterator itr;
+    
+    // variables
+    int count = 0;
+    for (itr = hashTable.begin(); itr != hashTable.end(); itr++)
+    {
+        // set symbol table entry item
+        SYMBOL_TABLE_ENTRY y = itr->second;
+        
+        // see if the type is an Array type
+        int baseName = y.getBaseType();
+        
+        if(baseName == ARRAY)
+        {
+            // if so then unravel and see how many elements there are
+            int arrayNum = y.getEndIndex() - y.getStartIndex();
+            
+            if (arrayNum == 0)
+            {
+                count++;
+            }
+            else
+            {
+                count = count + arrayNum;
+            }
+        }
+        if ((y.getTypeCode() == INT) ||
+           (y.getTypeCode() == CHAR) ||
+           (y.getTypeCode() == BOOL))
+           {
+               // at most one variable will be stored at a time per symbol table entry, besides arrays
+               count++;
+           }
+    }
+    return(count);
+  }
+  
+
 };
 
 #endif  // SYMBOL_TABLE_H

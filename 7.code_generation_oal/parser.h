@@ -131,6 +131,7 @@ class Parser
                         vector<string> &currentToken);
 	TYPE_INFO boolConst(Lexer &lex, 
                          vector<string> &currentToken);
+    int countVarsInScope(const int theDepth);
 
 
 	/// Symbol table mgt calls

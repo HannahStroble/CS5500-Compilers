@@ -1083,6 +1083,42 @@ TYPE_INFO Parser::findEntryInAnyScope(const string theName)
   }
 }
 
+
+int Parser::countVarsInScope(const int theDepth) 
+{
+  
+  // variables
+  int theSize = 0;
+  
+  // see how many layers are currently in scopestack
+  theSize = scopeStack.size();
+  
+  // copy the scopestack so we can pop things to get to the scope we need
+  stack<SYMBOL_TABLE> scopeStack2;
+  scopeStack2 = scopeStack;
+  
+  // make sure this thing is not size negative
+  if (theSize < 0)
+  {
+      cout << "Error! Size out of scope." << endl;
+      exit(1);
+  }
+  
+  // go to that layer in the scopestack
+  int layer = theSize - theDepth; // calculate how many to pop to get to desired top level
+  for (int i = 0; i <= layer; i++)
+  {
+      scopeStack2.pop();
+  }
+  
+  // call a count function within symbolTable
+  int theCount = scopeStack2.top().countEntry();
+  //cout << scopeStack2.top().name() << endl;
+  
+  return theCount;
+}
+
+
 void Parser::cleanUp() 
 {
   if (scopeStack.empty()) 
