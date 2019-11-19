@@ -101,7 +101,7 @@ class Parser
 	void stmt(Lexer &lex, vector<string> &currentToken);
 	void assignStmt(Lexer &lex, vector<string> &currentToken);
 	void procStmt(Lexer &lex, vector<string> &currentToken);
-	void procIdent(Lexer &lex, vector<string> &currentToken);
+	TYPE_INFO procIdent(Lexer &lex, vector<string> &currentToken);
 	void readStmt(Lexer &lex, vector<string> &currentToken);
 	void inputLst(Lexer &lex, vector<string> &currentToken);
 	TYPE_INFO inputVar(Lexer &lex, vector<string> &currentToken);

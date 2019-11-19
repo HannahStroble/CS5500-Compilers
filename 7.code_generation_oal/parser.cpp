@@ -363,6 +363,9 @@ void Parser::procDec(Lexer &lex, vector<string> &currentToken)
   printRule("N_PROCDEC", "N_PROCHDR N_BLOCK");
   procHdr(lex, currentToken);
   block(lex, currentToken);
+  
+  // decrease nest level
+  nest_level--;
 }
 
 void Parser::procHdr(Lexer &lex, vector<string> &currentToken) 
@@ -374,6 +377,9 @@ void Parser::procHdr(Lexer &lex, vector<string> &currentToken)
     if (currentToken[0] == "T_IDENT")
     {
       TYPE_INFO info = {PROCEDURE, NOT_APPLICABLE, NOT_APPLICABLE, NOT_APPLICABLE};
+      info.level = ++nest_level;
+      info.label = label++;
+      
       prSymbolTableAddition(currentToken[1], info);
       bool success = scopeStack.top().addEntry(SYMBOL_TABLE_ENTRY(currentToken[1], info));
       if (!success) 
@@ -512,15 +518,15 @@ void Parser::assignStmt(Lexer &lex, vector<string> &currentToken)
 void Parser::procStmt(Lexer &lex, vector<string> &currentToken) 
 {
   printRule("N_PROCSTMT", "N_PROCIDENT");
-  procIdent(lex, currentToken);
+  TYPE_INFO info = procIdent(lex, currentToken);
   //todo get caller nest level from procIdent
-  //for(callerLevel = procIdentNestLevel; callerLevel <= nest_level; callerLevel++)
-  //{
-  //  oal_prog << "pop" << callerLevel << ", 0" << endl;
-  //}
+  for(int callerLevel = info.level; callerLevel <= nest_level; callerLevel++)
+  {
+    oal_prog << "pop" << callerLevel << ", 0" << endl;
+  }
 }
 
-void Parser::procIdent(Lexer &lex, vector<string> &currentToken) 
+TYPE_INFO Parser::procIdent(Lexer &lex, vector<string> &currentToken) 
 {
   printRule("N_PROCIDENT", "T_IDENT");
   if (currentToken[0] == "T_IDENT")
@@ -532,16 +538,21 @@ void Parser::procIdent(Lexer &lex, vector<string> &currentToken)
       printError(currentToken, UNDEFINED_IDENT);
     if (typeInfo.type != PROCEDURE)
       printError(currentToken, ERR_PROCEDURE_VAR_MISMATCH);
-    currentToken = lex.getToken();
     //todo get caller nest level from procIdent
     //todo get scope label from t_ident
-    //for(callerLevel = nest_level; callerLevel >= nest_level; callerLevel++)
-    //{
-    //  oal_prog << "pop" << callerLevel << ", 0" << endl;
-    //}
-    // oal_prog << "  js L." << scopeLabel << endl;
+    for(int callerLevel = nest_level; callerLevel >= typeInfo.level; callerLevel++)
+    {
+      oal_prog << "pop" << callerLevel << ", 0" << endl;
+    }
+    oal_prog << "  js L." << typeInfo.label << endl;
+    
+    // get next token
+    currentToken = lex.getToken();
   }
   else syntaxError(currentToken);
+  
+  TYPE_INFO typeInfo = findEntryInAnyScope(currentToken[1]);
+  return(typeInfo);
 }
 
 void Parser::readStmt(Lexer &lex, vector<string> &currentToken) 

@@ -79,6 +79,8 @@ public:
   int getStartIndex() const { return typeInfo.startIndex; }
   int getEndIndex() const { return typeInfo.endIndex; }
   int getBaseType() const { return typeInfo.baseType; }
+  int getNestLevel() const { return typeInfo.level; }
+  int getLabel() const { return typeInfo.label; }
 };
 
 #endif  // SYMBOL_TABLE_ENTRY_H
