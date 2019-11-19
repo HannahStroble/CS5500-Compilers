@@ -725,15 +725,14 @@ void Parser::whileStmt(Lexer &lex, vector<string> &currentToken)
       printError(currentToken, ERR_EXPR_MUST_BE_BOOL);
     if (currentToken[0] == "T_DO")
     {
+      currentToken = lex.getToken();
+      stmt(lex, currentToken);
+
       int out_label = labels.top();
       labels.pop();
       oal_prog << "  jp L." << labels.top() << endl;
       oal_prog << "L." << out_label << ":" << endl;
       labels.pop();
-
-      currentToken = lex.getToken();
-      stmt(lex, currentToken);
-
     }
     else syntaxError(currentToken);
   }
