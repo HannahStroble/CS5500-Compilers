@@ -106,8 +106,10 @@ void Parser::block(Lexer &lex, vector<string> &currentToken)
   printRule("N_BLOCK", "N_VARDECPART N_PROCDECPART N_STMTPART");
   varDecPart(lex, currentToken);
   //after we know how many words we have we add bss for it
+  #if OAL_DEBUG
   cout << "memsize: " << next_addr.back() << endl;
-  //cout << "count: " << countVarsInScope(nest_level) << endl;
+  #endif
+
   if(nest_level == 0)
   {
     oal_prog << "  bss " << next_addr.back() << endl;
@@ -186,8 +188,11 @@ void Parser::varDec(Lexer &lex, vector<string> &currentToken)
         case ARRAY:
           size_tmp = info.endIndex - info.startIndex + 1;
       }
-      cout << "var: " << varName << " got: " << next_addr.back() << endl;
       
+      #if OAL_DEBUG
+      cout << "var: " << varName << " got: " << next_addr.back() << endl;
+      #endif
+
       info.level = nest_level;
       info.offset = next_addr.back();
       next_addr.back() += size_tmp;
@@ -246,8 +251,7 @@ TYPE_INFO Parser::identType(Lexer &lex,
   return(info);
 }
 
-TYPE_INFO Parser::array(Lexer &lex, 
-                        vector<string> &currentToken) 
+TYPE_INFO Parser::array(Lexer &lex, vector<string> &currentToken) 
 {
   TYPE_INFO info;
 
@@ -271,6 +275,7 @@ TYPE_INFO Parser::array(Lexer &lex,
           info.baseType = baseTypeInfo.type;
           info.startIndex = indexInfo.startIndex;
           info.endIndex = indexInfo.endIndex;
+          info.level = nest_level;
         }
         else syntaxError(currentToken);
       }
@@ -665,14 +670,23 @@ void Parser::conditionStmt(Lexer &lex, vector<string> &currentToken)
     if (info.type != BOOL)
       printError(currentToken, ERR_EXPR_MUST_BE_BOOL);
 
-    oal_prog << " jf L. " << label << endl;
+    //then label
+    oal_prog << "  jf L." << label << endl;
     labels.push(label++);
-
+    
     if (currentToken[0] == "T_THEN")
     {
       currentToken = lex.getToken();
       stmt(lex, currentToken);
+      oal_prog << "  jp L." << label << endl;
+      oal_prog << "L." << labels.top() << ":" << endl;
+      labels.pop();
+      labels.push(label++);
       elsePart(lex, currentToken);
+
+      //end label
+      oal_prog << "L." << labels.top() << ":" << endl;
+      labels.pop();
     }
     else syntaxError(currentToken);
   }
@@ -684,22 +698,11 @@ void Parser::elsePart(Lexer &lex, vector<string> &currentToken)
   if (currentToken[0] == "T_ELSE")
   {
     printRule("N_ELSEPART", "T_ELSE N_STMT");
-    
-    oal_prog << "  jp L." << label << endl;
-    oal_prog << "L." << labels.top() << ":" << endl;
-    labels.pop();
-    labels.push(label++);
-
     currentToken = lex.getToken();
     stmt(lex, currentToken);
-
-    oal_prog << "L." << labels.top() << ":" << endl;
-    labels.pop();
   }
   else
   { 
-    oal_prog << "L." << labels.top() << ":" << endl;
-    labels.pop();
     printRule("N_ELSEPART", "epsilon");
   }
 }
@@ -749,6 +752,9 @@ TYPE_INFO Parser::expr(Lexer &lex, vector<string> &currentToken)
   oal_tmp.clear();
 
   rhsType = opExpr(lex, currentToken);
+  oal_prog << oal_tmp.str();
+  oal_tmp.str("");
+  oal_tmp.clear();
 
   if (rhsType.type != NOT_APPLICABLE)
   {
@@ -802,7 +808,7 @@ TYPE_INFO Parser::simpleExpr(Lexer &lex, vector<string> &currentToken)
 
 void Parser::addOpLst(Lexer &lex, vector<string> &currentToken) 
 {
-  if ((currentToken[0] == "T_PLUS") || 
+  if ((currentToken[0] == "T_PLUS")  || 
       (currentToken[0] == "T_MINUS") ||
       (currentToken[0] == "T_OR"))
   {
@@ -867,6 +873,7 @@ TYPE_INFO Parser::factor(Lexer &lex, vector<string> &currentToken)
       printRule("N_FACTOR", "T_NOT N_FACTOR");
       currentToken = lex.getToken();
       info = factor(lex, currentToken);
+      oal_prog << "  not" << endl;
       if (info.type != BOOL)
         printError(currentToken, ERR_EXPR_MUST_BE_BOOL);
     }
@@ -886,6 +893,8 @@ TYPE_INFO Parser::factor(Lexer &lex, vector<string> &currentToken)
         int signType = sign(lex, currentToken);
         info = variable(lex, currentToken);
         oal_prog << "  deref" << endl;
+        if(signType == NEGATIVE)
+          oal_prog << "  neg" << endl;
         if ((signType != NO_SIGN) && (info.type != INT))
           printError(currentToken, ERR_EXPR_MUST_BE_INT);
       }
@@ -1005,6 +1014,13 @@ TYPE_INFO Parser::variable(Lexer &lex, vector<string> &currentToken)
     
     if (isArrayElement)
     {
+      #if OAL_DEBUG
+      cout << "arr offset:     " << typeInfo.offset << endl;
+      cout << "arr startIndex: " << typeInfo.startIndex << endl;
+      cout << "arr endIndex:   " << typeInfo.startIndex << endl;
+      #endif
+      oal_prog << "  la " << (int)(typeInfo.offset - typeInfo.startIndex) << ", " << typeInfo.level << endl;
+      oal_prog << "  add" << endl;
       if (typeInfo.type != ARRAY)
         printError(currentToken, ERR_INDEX_VAR_MUST_BE_ARRAY);
       typeInfo.type = typeInfo.baseType;
@@ -1031,6 +1047,7 @@ bool Parser::idxVar(Lexer &lex, vector<string> &currentToken)
     isArrayElement = true;
     currentToken = lex.getToken();
     TYPE_INFO info = expr(lex, currentToken);
+
     if (info.type != INT)
       printError(currentToken, ERR_INDEX_EXPR_MUST_BE_INT);
     if (currentToken[0] == "T_RBRACK")
