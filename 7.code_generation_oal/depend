@@ -1,3 +1,0 @@
-lexer.o: lexer.cpp lexer.h
-main.o: main.cpp lexer.h parser.h symbolTable.h symbolTableEntry.h
-parser.o: parser.cpp parser.h lexer.h symbolTable.h symbolTableEntry.h
