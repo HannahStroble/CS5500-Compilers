@@ -25,7 +25,7 @@
 #include <vector>
 using namespace std;
 
-#define DEBUG 0   // set to non-zero to see debugging output
+#define DEBUG 1   // set to non-zero to see debugging output
 #define OUTPUT_TOKENS	     0
 #define OUTPUT_PRODUCTIONS 0
 
